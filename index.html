@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventify Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #0f0f0f; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .accent-red { background-color: #ff1f44; }
+        .progress-bar { height: 6px; border-radius: 3px; background: #333; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #ff1f44, #ff5f78); transition: width 0.5s ease; }
+    </style>
+</head>
+<body class="p-4 pb-24">
+
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">Eventify</h1>
+            <p class="text-gray-400 text-sm">Plan your perfect moments</p>
+        </div>
+        <div class="relative">
+            <img id="display-pp" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full border-2 border-red-500 object-cover">
+        </div>
+    </header>
+
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="glass p-4 rounded-2xl">
+            <p class="text-xs text-gray-400">Total Planned</p>
+            <h2 class="text-2xl font-bold">3</h2>
+        </div>
+        <div class="glass p-4 rounded-2xl">
+            <p class="text-xs text-gray-400">Total Guests</p>
+            <h2 class="text-2xl font-bold">11</h2>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <section id="home-section">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Upcoming Events</h3>
+                <button class="accent-red w-8 h-8 rounded-full flex items-center justify-center">+</button>
+            </div>
+            
+            <div class="glass p-4 rounded-2xl mb-4">
+                <div class="flex gap-4 mb-3">
+                    <div class="w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center text-2xl">🎂</div>
+                    <div>
+                        <h4 class="font-bold">Hamed's Birthday Bash</h4>
+                        <p class="text-xs text-gray-400"><i class="fa-solid fa-location-dot"></i> Downtown Lounge</p>
+                    </div>
+                </div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-400">Progress</span>
+                    <span>25%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="calendar-section" class="hidden">
+            <h3 class="text-lg font-semibold mb-4">Calendar</h3>
+            <div class="glass p-4 rounded-2xl" id="calendar-container">
+                </div>
+        </section>
+
+        <section id="profile-section" class="hidden">
+            <h3 class="text-lg font-semibold mb-4">My Profile</h3>
+            <div class="glass p-6 rounded-2xl text-center">
+                <div class="mb-4 relative inline-block">
+                    <img id="profile-pic" src="https://via.placeholder.com/100" class="w-24 h-24 rounded-full border-4 border-red-500 mx-auto object-cover">
+                    <input type="file" id="upload-pp" class="hidden">
+                    <label for="upload-pp" class="absolute bottom-0 right-0 bg-red-500 p-2 rounded-full cursor-pointer">
+                        <i class="fa-solid fa-camera text-xs"></i>
+                    </label>
+                </div>
+                <input type="text" id="user-name" placeholder="Your Name" class="bg-transparent border-b border-gray-700 w-full text-center py-2 mb-4 outline-none">
+                <input type="text" id="user-profession" placeholder="Profession" class="bg-transparent border-b border-gray-700 w-full text-center py-2 mb-4 outline-none text-gray-400">
+                <input type="number" id="user-age" placeholder="Age" class="bg-transparent border-b border-gray-700 w-full text-center py-2 mb-4 outline-none text-gray-400">
+            </div>
+        </section>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 glass py-4 flex justify-around items-center border-t border-gray-800">
+        <button onclick="showSection('home')" class="text-red-500 flex flex-col items-center"><i class="fa-solid fa-house"></i><span class="text-[10px] mt-1">Home</span></button>
+        <button onclick="showSection('calendar')" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-calendar-days"></i><span class="text-[10px] mt-1">Calendar</span></button>
+        <button onclick="showSection('profile')" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-user"></i><span class="text-[10px] mt-1">Profile</span></button>
+    </nav>
+
+    <script>
+        function showSection(id) {
+            document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id + '-section').classList.remove('hidden');
+        }
+
+        // Simple Calendar Logic
+        function renderCalendar() {
+            const date = new Date();
+            const month = date.toLocaleString('default', { month: 'long' });
+            const year = date.getFullYear();
+            let html = `<div class='flex justify-between mb-4 font-bold'><span>${month} ${year}</span></div>`;
+            html += `<div class='grid grid-cols-7 gap-2 text-center text-xs text-gray-500 mb-2'>
+                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div><div class='grid grid-cols-7 gap-2 text-center'>`;
+            
+            for(let i=1; i<=30; i++) {
+                const isToday = i === date.getDate() ? 'bg-red-500 rounded-full' : '';
+                html += `<span class='py-2 ${isToday}'>${i}</span>`;
+            }
+            html += `</div>`;
+            document.getElementById('calendar-container').innerHTML = html;
+        }
+
+        // Image Preview Logic
+        document.getElementById('upload-pp').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                document.getElementById('profile-pic').src = reader.result;
+                document.getElementById('display-pp').src = reader.result;
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        renderCalendar();
+    </script>
+</body>
+</html>
