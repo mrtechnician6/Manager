@@ -48,170 +48,206 @@ body { background:#0a0a0a; color:white; }
 </div>
 
 <script>
-
-// FIREBASE CONFIG
 const firebaseConfig = {
-apiKey: "AIzaSyCp8",
-authDomain: "to-do-b0243.firebaseapp.com",
-databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
-projectId: "to-do-b0243",
+    apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
+    authDomain: "to-do-b0243.firebaseapp.com",
+    databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
+    projectId: "to-do-b0243",
+    appId: "1:984373301974:web:05bf84d27da4ed584c6f77"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const auth = firebase.auth();
+const USER_ID = "nirdeshan_kunwar";
 
-let USER_ID = null;
-let tasks = [];
-let habits = [];
+let allMissions = [];
+let viewDate = new Date();
+let currentFilter = 'present';
 
-// LOGIN
-auth.signInAnonymously().then(()=>{
-auth.onAuthStateChanged(user=>{
-USER_ID = user.uid;
+// 🔥 REALTIME SYNC
+function sync() {
+    db.ref('users/' + USER_ID + '/missions').on('value', snap => {
+        const data = snap.val();
+        allMissions = data ? Object.values(data) : [];
+        renderAll();
+    });
+
+    document.getElementById('today-date-label').innerText =
+        new Date().toDateString();
+}
+
+// 🔥 CREATE CARD WITH ✔ ❌
+function createCard(m) {
+    return `
+    <div class="glass-card">
+        <div class="flex justify-between items-center">
+            <div>
+                <h4 class="font-bold text-sm ${m.done ? 'line-through opacity-40 text-gray-500' : ''}">
+                    ${m.text}
+                </h4>
+                <p class="text-[9px] text-gray-500 mt-1">${m.date}</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="markDone('${m.id}', true)" class="bg-green-500 px-3 py-1 rounded text-xs">✔</button>
+                <button onclick="markDone('${m.id}', false)" class="bg-red-500 px-3 py-1 rounded text-xs">✖</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+// 🔥 MARK DONE / NOT DONE
+function markDone(id, status) {
+    db.ref('users/' + USER_ID + '/missions/' + id).update({ done: status });
+
+    if (status) {
+        alert("🔥 Congratulations! Keep going!");
+    } else {
+        alert("😔 Do better next time!");
+    }
+}
+
+// 🔥 SAVE MISSION (MAIN FIX)
+function saveMission() {
+    const text = document.getElementById('modal-input').value.trim();
+    const date = document.getElementById('plan-date').value;
+
+    if (!text || !date) return;
+
+    const id = "M-" + Date.now();
+    const mission = { id, text, date, done: false };
+
+    // SAVE
+    db.ref('users/' + USER_ID + '/missions/' + id).set(mission);
+
+    // 🔥 INSTANT UI UPDATE (IMPORTANT)
+    allMissions.push(mission);
+    renderAll();
+
+    closeModal();
+}
+
+// 🔥 RENDER EVERYTHING
+function renderAll() {
+    renderHome();
+    renderTodoView();
+    renderCalendar();
+}
+
+// 🔥 HOME (TODAY)
+function renderHome() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const homeList = document.getElementById('home-today-list');
+
+    const todaysTasks = allMissions.filter(m => m.date === todayStr);
+
+    homeList.innerHTML = "";
+
+    if (todaysTasks.length === 0) {
+        homeList.innerHTML = `<p class="text-center text-gray-600 py-10 text-xs italic">No missions today</p>`;
+        return;
+    }
+
+    todaysTasks.forEach(m => {
+        homeList.innerHTML += createCard(m);
+    });
+}
+
+// 🔥 TODO VIEW (PRESENT / UPCOMING / PAST)
+function renderTodoView() {
+    const container = document.getElementById('todo-master-container');
+    const today = new Date().setHours(0,0,0,0);
+
+    let filtered = allMissions.filter(m => {
+        const mDate = new Date(m.date).setHours(0,0,0,0);
+
+        if (currentFilter === 'present') return mDate === today;
+        if (currentFilter === 'upcoming') return mDate > today;
+        if (currentFilter === 'past') return mDate < today;
+    });
+
+    container.innerHTML = "";
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-600 py-10 text-xs">No data</p>`;
+        return;
+    }
+
+    filtered.sort((a,b)=> new Date(a.date)-new Date(b.date));
+
+    filtered.forEach(m => {
+        container.innerHTML += createCard(m);
+    });
+}
+
+// 🔥 CALENDAR
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const label = document.getElementById('cal-month-year');
+
+    grid.innerHTML = "";
+
+    const month = viewDate.getMonth();
+    const year = viewDate.getFullYear();
+
+    label.innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for(let i=0;i<firstDay;i++) grid.innerHTML += `<div></div>`;
+
+    for(let d=1; d<=daysInMonth; d++){
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const hasPlan = allMissions.some(m => m.date === dateStr);
+
+        grid.innerHTML += `
+        <div onclick="openPlanModal('${dateStr}')" class="aspect-square flex items-center justify-center rounded-xl text-xs ${hasPlan ? 'bg-red-600' : 'bg-white/5'}">
+            ${d}
+        </div>`;
+    }
+}
+
+// NAV
+function showView(v) {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(v + '-view').classList.remove('hidden');
+
+    document.querySelectorAll('.nav-bar button').forEach(b => b.className = 'text-gray-600 text-2xl');
+    document.getElementById('nav-' + v).className = 'text-red-500 text-2xl scale-110';
+}
+
+// FILTER
+function filterTodo(f) {
+    currentFilter = f;
+    renderTodoView();
+}
+
+// MODAL
+function openModal() {
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('plan-date').value = new Date().toISOString().split('T')[0];
+}
+
+function openPlanModal(date) {
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('plan-date').value = date;
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal-input').value = "";
+}
+
+// CALENDAR NAV
+function changeMonth(dir) {
+    viewDate.setMonth(viewDate.getMonth() + dir);
+    renderCalendar();
+}
+
+// START
 sync();
-});
-});
-
-// SYNC
-function sync(){
-db.ref("users/"+USER_ID).on("value",snap=>{
-const data = snap.val() || {};
-tasks = data.tasks ? Object.values(data.tasks) : [];
-habits = data.habits ? Object.values(data.habits) : [];
-render();
-});
-}
-
-// ADD TASK
-function addTask(){
-const text = taskInput.value.trim();
-const date = taskDate.value;
-if(!text || !date) return alert("Fill all");
-
-const id = "T"+Date.now();
-const t = {id,text,date,done:false};
-
-db.ref("users/"+USER_ID+"/tasks/"+id).set(t);
-taskInput.value="";
-}
-
-// RENDER
-function render(){
-renderToday();
-renderHabits();
-aiSuggestion();
-}
-
-// TODAY VIEW
-function renderToday(){
-const today = new Date().toISOString().split("T")[0];
-todayList.innerHTML="";
-
-tasks.filter(t=>t.date===today).forEach(t=>{
-todayList.innerHTML+=`
-<div class="card mt-2 flex justify-between">
-<span>${t.text}</span>
-<div>
-<button onclick="mark('${t.id}',true)" class="bg-green-500 px-2">✔</button>
-<button onclick="mark('${t.id}',false)" class="bg-red-500 px-2">✖</button>
-</div>
-</div>`;
-});
-}
-
-// MARK DONE
-function mark(id,status){
-db.ref("users/"+USER_ID+"/tasks/"+id).update({done:status});
-
-if(status){
-alert("🔥 Congratulations! Keep going!");
-}else{
-alert("😔 Do better next time!");
-}
-}
-
-// ADD HABIT
-function addHabit(){
-const text = habitInput.value.trim();
-if(!text) return;
-
-const id = "H"+Date.now();
-const h = {id,text,streak:0,lastDate:null};
-
-db.ref("users/"+USER_ID+"/habits/"+id).set(h);
-habitInput.value="";
-}
-
-// RENDER HABIT
-function renderHabits(){
-habitList.innerHTML="";
-
-habits.forEach(h=>{
-habitList.innerHTML+=`
-<div class="card mt-2 flex justify-between">
-<div>
-<p>${h.text}</p>
-<p class="text-xs text-gray-400">🔥 Streak: ${h.streak}</p>
-</div>
-<button onclick="completeHabit('${h.id}')" class="bg-green-600 px-2">Done</button>
-</div>`;
-});
-}
-
-// COMPLETE HABIT
-function completeHabit(id){
-const h = habits.find(x=>x.id===id);
-const today = new Date().toISOString().split("T")[0];
-
-let streak = h.streak;
-
-if(h.lastDate){
-const yesterday = new Date();
-yesterday.setDate(yesterday.getDate()-1);
-
-const y = yesterday.toISOString().split("T")[0];
-
-if(h.lastDate===y){
-streak++;
-}else if(h.lastDate!==today){
-streak=1;
-}
-}else{
-streak=1;
-}
-
-db.ref("users/"+USER_ID+"/habits/"+id).update({
-streak:streak,
-lastDate:today
-});
-}
-
-// AI SUGGESTION
-function aiSuggestion(){
-let completed = tasks.filter(t=>t.done).length;
-let total = tasks.length;
-
-let msg = "";
-
-if(total===0){
-msg = "Start planning your day.";
-}
-else if(completed===total){
-msg = "🔥 Perfect day! You are unstoppable.";
-}
-else if(completed > total/2){
-msg = "💪 Good progress. Push a little more.";
-}
-else{
-msg = "⚠ You are falling behind. Focus now.";
-}
-
-aiBox.innerText = msg;
-}
-
 </script>
-
 </body>
 </html>
 
