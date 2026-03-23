@@ -140,30 +140,41 @@
             lastLoginDate: ""
         };
 
-        // --- 2. AUTH LOGIC ---
-        function handleAuth(type) {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            if(type === 'login') {
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
-            } else {
-                auth.createUserWithEmailAndPassword(email, pass).catch(e => alert(e.message));
-            }
-        }
+     
+        // 2. SEND MAGIC LINK
+function handleAuth() {
+    const email = document.getElementById('email').value;
+    const actionCodeSettings = {
+        url: window.location.href, // Returns user to this exact page
+        handleCodeInApp: true
+    };
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                loadData();
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
-            }
-        });
+    auth.sendSignInLinkToEmail(email, actionCodeSettings)
+        .then(() => {
+            // Save email locally to complete login when they click the link
+            window.localStorage.setItem('emailForSignIn', email);
+            alert('Check your email! We sent a "Magic Link" to log you in.');
+        })
+        .catch((error) => alert(error.message));
+}
 
-        // --- 3. MIDNIGHT SYSTEM & DATA ---
+// 3. COMPLETE LOGIN (Checks if the user just clicked the link)
+if (auth.isSignInWithEmailLink(window.location.href)) {
+    let email = window.localStorage.getItem('emailForSignIn');
+    if (!email) {
+        email = window.prompt('Please provide your email for confirmation');
+    }
+    auth.signInWithEmailLink(email, window.location.href)
+        .then((result) => {
+            window.localStorage.removeItem('emailForSignIn');
+            // User is now signed in!
+        })
+        .catch((error) => alert("Link expired or invalid."));
+}
+        
+   });
+
+        // --- 4. MIDNIGHT SYSTEM & DATA ---
         function loadData() {
             db.ref('users/' + currentUser.uid).on('value', snap => {
                 const data = snap.val();
@@ -202,7 +213,7 @@
             }
         }
 
-        // --- 4. TASK LOGIC ---
+        // --- 5. TASK LOGIC ---
         function addTasksFromModal() {
             const lines = document.getElementById('task-entry').value.split('\n').filter(l => l.trim() !== "");
             lines.forEach(text => {
@@ -226,7 +237,7 @@
             saveToDB();
         }
 
-        // --- 5. UI RENDERING ---
+        // --- 6. UI RENDERING ---
         function renderAll() {
             document.getElementById('current-date').innerText = new Date().toDateString();
             
@@ -269,7 +280,7 @@
             container.innerHTML = html + "</div>";
         }
 
-        // --- 6. UTILITIES ---
+        // --- 7. UTILITIES ---
         function switchTab(tab) {
             document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
             document.getElementById(tab + '-view').classList.remove('hidden');
