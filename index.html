@@ -132,27 +132,41 @@
 
         let userData = { today: [], tomorrow: [], doneCount: 0, missedCount: 0, lastLoginDate: "" };
 
-        // --- 2. AUTHENTICATION ---
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(e => alert(e.message));
-        }
+      // --- 2. AUTHENTICATION ---
+function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    // Use Redirect instead of Popup for mobile compatibility
+    auth.signInWithRedirect(provider);
+}
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('welcome-user').innerText = "Hello, " + user.displayName.split(' ')[0];
-                document.getElementById('user-avatar').src = user.photoURL;
-                document.getElementById('prof-name').innerText = user.displayName;
-                loadData(user.uid);
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
-            }
-        });
+// Add this to handle the result when you get redirected back
+auth.getRedirectResult().then(result => {
+    if (result.user) {
+        console.log("Logged in via redirect!");
+    }
+}).catch(e => {
+    if (e.code === 'auth/unauthorized-domain') {
+        alert("Domain Error: Go to Firebase > Auth > Settings and add your current website URL to 'Authorized Domains'.");
+    } else {
+        alert(e.message);
+    }
+});
 
-        // --- 3. DATA PERSISTENCE ---
+auth.onAuthStateChanged(user => {
+    if (user) {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        document.getElementById('welcome-user').innerText = "Hello, " + user.displayName.split(' ')[0];
+        document.getElementById('user-avatar').src = user.photoURL;
+        document.getElementById('prof-name').innerText = user.displayName;
+        loadData(user.uid);
+    } else {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.add('hidden');
+    }
+});
+        
+         // --- 3. DATA PERSISTENCE ---
         function loadData(uid) {
             db.ref('users/' + uid).on('value', snap => {
                 const data = snap.val();
