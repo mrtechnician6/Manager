@@ -3,129 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eventify Manager</title>
+    <title>Mrtechnician | Life Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
     <style>
-        body { background-color: #0f0f0f; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .accent-red { background-color: #ff1f44; }
-        .progress-bar { height: 6px; border-radius: 3px; background: #333; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #ff1f44, #ff5f78); transition: width 0.5s ease; }
+        :root { --accent: #ff1f44; --bg: #050505; --card: rgba(255, 255, 255, 0.05); }
+        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: var(--card); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+        .btn-premium { background: var(--accent); transition: all 0.3s ease; }
+        .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255, 31, 68, 0.4); }
+        .task-done { text-decoration: line-through; opacity: 0.5; }
+        .hidden { display: none; }
+        input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; color: white; outline: none; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 pb-24">
+<body class="pb-24">
 
-    <header class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight">Eventify</h1>
-            <p class="text-gray-400 text-sm">Plan your perfect moments</p>
-        </div>
-        <div class="relative">
-            <img id="display-pp" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full border-2 border-red-500 object-cover">
-        </div>
-    </header>
-
-    <div class="grid grid-cols-2 gap-4 mb-8">
-        <div class="glass p-4 rounded-2xl">
-            <p class="text-xs text-gray-400">Total Planned</p>
-            <h2 class="text-2xl font-bold">3</h2>
-        </div>
-        <div class="glass p-4 rounded-2xl">
-            <p class="text-xs text-gray-400">Total Guests</p>
-            <h2 class="text-2xl font-bold">11</h2>
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-black p-6">
+        <div class="glass p-8 w-full max-w-md text-center">
+            <h1 class="text-3xl font-bold mb-2 text-white">Mrtechnician</h1>
+            <p class="text-gray-400 mb-8">Premium Life Manager</p>
+            <div class="flex flex-col gap-4">
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="handleAuth('login')" class="btn-premium py-3 rounded-xl font-bold">Login</button>
+                <button onclick="handleAuth('signup')" class="text-sm text-gray-400 underline">Create New Account</button>
+            </div>
         </div>
     </div>
 
-    <main id="main-content">
-        <section id="home-section">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">Upcoming Events</h3>
-                <button class="accent-red w-8 h-8 rounded-full flex items-center justify-center">+</button>
+    <div id="app-screen" class="hidden animate-fade-in">
+        <header class="p-6 flex justify-between items-center">
+            <div>
+                <h2 id="welcome-user" class="text-xl font-bold">Hello, Creator</h2>
+                <p id="current-date" class="text-xs text-gray-500 uppercase tracking-widest"></p>
             </div>
-            
-            <div class="glass p-4 rounded-2xl mb-4">
-                <div class="flex gap-4 mb-3">
-                    <div class="w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center text-2xl">🎂</div>
-                    <div>
-                        <h4 class="font-bold">Hamed's Birthday Bash</h4>
-                        <p class="text-xs text-gray-400"><i class="fa-solid fa-location-dot"></i> Downtown Lounge</p>
+            <button onclick="firebase.auth().signOut()" class="text-gray-500"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </header>
+
+        <div class="px-6 mb-8">
+            <div class="glass p-4 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase">Discipline Score</p>
+                    <h3 id="discipline-percent" class="text-2xl font-black text-red-500">0%</h3>
+                </div>
+                <div class="w-1/2 bg-gray-800 h-2 rounded-full overflow-hidden">
+                    <div id="discipline-bar" class="bg-red-500 h-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <main class="px-6">
+            <div id="home-view">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">Today's To-Do</h3>
+                    <button onclick="toggleModal('todo-modal')" class="btn-premium px-4 py-1 rounded-full text-xs font-bold">+ Add Task</button>
+                </div>
+                <div id="today-list" class="space-y-3 mb-8">
+                    </div>
+
+                <div class="mt-10">
+                    <h3 class="font-bold text-lg mb-4 text-gray-400">Set Tomorrow's Plan</h3>
+                    <div class="glass p-4">
+                        <textarea id="tomorrow-input" placeholder="Type tasks (one per line)..." class="w-full bg-transparent outline-none text-sm h-24"></textarea>
+                        <button onclick="saveTomorrow()" class="w-full mt-2 text-xs font-bold text-red-500 py-2 border border-red-500 rounded-lg uppercase tracking-widest">Schedule for Tomorrow</button>
                     </div>
                 </div>
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="text-gray-400">Progress</span>
-                    <span>25%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 25%"></div>
+            </div>
+
+            <div id="calendar-view" class="hidden">
+                <h3 class="font-bold text-xl mb-4">My Calendar</h3>
+                <div id="calendar-container" class="glass p-4"></div>
+            </div>
+
+            <div id="profile-view" class="hidden">
+                <div class="glass p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 border-2 border-red-500 rounded-full overflow-hidden bg-gray-800">
+                        <img id="user-avatar" src="https://via.placeholder.com/150" class="w-full h-full object-cover">
+                    </div>
+                    <h2 id="prof-name" class="text-xl font-bold">---</h2>
+                    <p id="prof-job" class="text-gray-500 text-sm mb-6 uppercase tracking-widest">Digital Creator</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-left">
+                        <div class="glass p-3"><p class="text-xs text-gray-400">Done</p><h4 id="count-done" class="font-bold">0</h4></div>
+                        <div class="glass p-3"><p class="text-xs text-gray-400">Missed</p><h4 id="count-missed" class="font-bold text-red-500">0</h4></div>
+                    </div>
                 </div>
             </div>
-        </section>
+        </main>
 
-        <section id="calendar-section" class="hidden">
-            <h3 class="text-lg font-semibold mb-4">Calendar</h3>
-            <div class="glass p-4 rounded-2xl" id="calendar-container">
-                </div>
-        </section>
+        <nav class="fixed bottom-6 left-6 right-6 glass p-4 flex justify-around items-center z-40">
+            <button onclick="switchTab('home')" class="nav-btn text-red-500"><i class="fa-solid fa-house"></i></button>
+            <button onclick="switchTab('calendar')" class="nav-btn text-gray-500"><i class="fa-solid fa-calendar"></i></button>
+            <button onclick="switchTab('profile')" class="nav-btn text-gray-500"><i class="fa-solid fa-user-gear"></i></button>
+        </nav>
+    </div>
 
-        <section id="profile-section" class="hidden">
-            <h3 class="text-lg font-semibold mb-4">My Profile</h3>
-            <div class="glass p-6 rounded-2xl text-center">
-                <div class="mb-4 relative inline-block">
-                    <img id="profile-pic" src="https://via.placeholder.com/100" class="w-24 h-24 rounded-full border-4 border-red-500 mx-auto object-cover">
-                    <input type="file" id="upload-pp" class="hidden">
-                    <label for="upload-pp" class="absolute bottom-0 right-0 bg-red-500 p-2 rounded-full cursor-pointer">
-                        <i class="fa-solid fa-camera text-xs"></i>
-                    </label>
-                </div>
-                <input type="text" id="user-name" placeholder="Your Name" class="bg-transparent border-b border-gray-700 w-full text-center py-2 mb-4 outline-none">
-                <input type="text" id="user-profession" placeholder="Profession" class="bg-transparent border-b border-gray-700 w-full text-center py-2 mb-4 outline-none text-gray-400">
-                <input type="number" id="user-age" placeholder="Age" class="bg-transparent border-b border-gray-700 w-full text-center py-2 mb-4 outline-none text-gray-400">
+    <div id="todo-modal" class="fixed inset-0 bg-black/80 hidden z-50 p-6 flex items-center">
+        <div class="glass p-6 w-full">
+            <h3 class="font-bold mb-4">Add Today's Tasks</h3>
+            <textarea id="task-entry" class="w-full h-32 mb-4" placeholder="Task 1&#10;Task 2&#10;Task 3..."></textarea>
+            <div class="flex gap-2">
+                <button onclick="addTasksFromModal()" class="flex-1 btn-premium py-3 rounded-xl font-bold">Add to List</button>
+                <button onclick="toggleModal('todo-modal')" class="px-4 py-3 rounded-xl glass">Cancel</button>
             </div>
-        </section>
-    </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 glass py-4 flex justify-around items-center border-t border-gray-800">
-        <button onclick="showSection('home')" class="text-red-500 flex flex-col items-center"><i class="fa-solid fa-house"></i><span class="text-[10px] mt-1">Home</span></button>
-        <button onclick="showSection('calendar')" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-calendar-days"></i><span class="text-[10px] mt-1">Calendar</span></button>
-        <button onclick="showSection('profile')" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-user"></i><span class="text-[10px] mt-1">Profile</span></button>
-    </nav>
+        </div>
+    </div>
 
     <script>
-        function showSection(id) {
-            document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id + '-section').classList.remove('hidden');
+        // --- 1. FIREBASE INIT ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let currentUser = null;
+        let userData = {
+            today: [],
+            tomorrow: [],
+            doneCount: 0,
+            missedCount: 0,
+            lastLoginDate: ""
+        };
+
+        // --- 2. AUTH LOGIC ---
+        function handleAuth(type) {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            if(type === 'login') {
+                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+            } else {
+                auth.createUserWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+            }
         }
 
-        // Simple Calendar Logic
-        function renderCalendar() {
-            const date = new Date();
-            const month = date.toLocaleString('default', { month: 'long' });
-            const year = date.getFullYear();
-            let html = `<div class='flex justify-between mb-4 font-bold'><span>${month} ${year}</span></div>`;
-            html += `<div class='grid grid-cols-7 gap-2 text-center text-xs text-gray-500 mb-2'>
-                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-            </div><div class='grid grid-cols-7 gap-2 text-center'>`;
-            
-            for(let i=1; i<=30; i++) {
-                const isToday = i === date.getDate() ? 'bg-red-500 rounded-full' : '';
-                html += `<span class='py-2 ${isToday}'>${i}</span>`;
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                loadData();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
             }
-            html += `</div>`;
-            document.getElementById('calendar-container').innerHTML = html;
-        }
-
-        // Image Preview Logic
-        document.getElementById('upload-pp').addEventListener('change', function(e) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                document.getElementById('profile-pic').src = reader.result;
-                document.getElementById('display-pp').src = reader.result;
-            }
-            reader.readAsDataURL(e.target.files[0]);
         });
 
-        renderCalendar();
+        // --- 3. MIDNIGHT SYSTEM & DATA ---
+        function loadData() {
+            db.ref('users/' + currentUser.uid).on('value', snap => {
+                const data = snap.val();
+                if (data) {
+                    userData = data;
+                    checkMidnightSystem();
+                    renderAll();
+                }
+            });
+        }
+
+        function checkMidnightSystem() {
+            const todayStr = new Date().toDateString();
+            if (userData.lastLoginDate !== todayStr && userData.lastLoginDate !== "") {
+                // Count missed tasks from yesterday's today list
+                const missed = userData.today.filter(t => !t.completed).length;
+                const done = userData.today.filter(t => t.completed).length;
+                
+                userData.doneCount += done;
+                userData.missedCount += missed;
+                
+                // Move tomorrow -> today
+                userData.today = userData.tomorrow.map(t => ({ ...t, completed: false }));
+                userData.tomorrow = [];
+                userData.lastLoginDate = todayStr;
+                saveToDB();
+            } else if (userData.lastLoginDate === "") {
+                userData.lastLoginDate = todayStr;
+                saveToDB();
+            }
+        }
+
+        function saveToDB() {
+            if (currentUser) {
+                db.ref('users/' + currentUser.uid).set(userData);
+            }
+        }
+
+        // --- 4. TASK LOGIC ---
+        function addTasksFromModal() {
+            const lines = document.getElementById('task-entry').value.split('\n').filter(l => l.trim() !== "");
+            lines.forEach(text => {
+                userData.today.push({ text, completed: false, date: new Date().toLocaleDateString() });
+            });
+            document.getElementById('task-entry').value = "";
+            toggleModal('todo-modal');
+            saveToDB();
+        }
+
+        function toggleTask(index) {
+            userData.today[index].completed = !userData.today[index].completed;
+            saveToDB();
+        }
+
+        function saveTomorrow() {
+            const lines = document.getElementById('tomorrow-input').value.split('\n').filter(l => l.trim() !== "");
+            userData.tomorrow = lines.map(text => ({ text, completed: false }));
+            document.getElementById('tomorrow-input').value = "";
+            alert("Tasks set for tomorrow!");
+            saveToDB();
+        }
+
+        // --- 5. UI RENDERING ---
+        function renderAll() {
+            document.getElementById('current-date').innerText = new Date().toDateString();
+            
+            // Today List
+            const listContainer = document.getElementById('today-list');
+            listContainer.innerHTML = userData.today.length ? "" : "<p class='text-center text-gray-600 text-sm'>No tasks for today.</p>";
+            userData.today.forEach((task, i) => {
+                listContainer.innerHTML += `
+                    <div onclick="toggleTask(${i})" class="glass p-4 flex items-center justify-between cursor-pointer">
+                        <span class="${task.completed ? 'task-done' : ''}">${task.text}</span>
+                        <i class="fa-solid ${task.completed ? 'fa-circle-check text-red-500' : 'fa-circle text-gray-700'}"></i>
+                    </div>
+                `;
+            });
+
+            // Discipline
+            const total = userData.doneCount + userData.missedCount;
+            const percent = total === 0 ? 0 : Math.round((userData.doneCount / total) * 100);
+            document.getElementById('discipline-percent').innerText = percent + "%";
+            document.getElementById('discipline-bar').style.width = percent + "%";
+            
+            // Profile
+            document.getElementById('count-done').innerText = userData.doneCount;
+            document.getElementById('count-missed').innerText = userData.missedCount;
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            const d = new Date();
+            const month = d.toLocaleString('default', { month: 'long' });
+            let html = `<div class='text-center mb-4 font-bold'>${month} ${d.getFullYear()}</div><div class='grid grid-cols-7 gap-1 text-[10px] text-gray-500 text-center mb-2'>
+                <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+            </div><div class='grid grid-cols-7 gap-1 text-center'>`;
+            
+            for(let i=1; i<=31; i++) {
+                const isToday = i === d.getDate() ? 'bg-red-500 rounded-lg' : 'hover:bg-white/10';
+                html += `<div class='p-2 text-xs rounded-lg ${isToday} cursor-pointer'>${i}</div>`;
+            }
+            container.innerHTML = html + "</div>";
+        }
+
+        // --- 6. UTILITIES ---
+        function switchTab(tab) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(tab + '-view').classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.replace('text-red-500', 'text-gray-500'));
+            event.currentTarget.classList.replace('text-gray-500', 'text-red-500');
+        }
+
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
     </script>
 </body>
 </html>
+
+
+
+
+
+ 
