@@ -3,120 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mrtechnician | Life Manager</title>
+    <title>Mrtechnician | Elite Protocol</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --accent: #ff1f44; --bg: #050505; --card: rgba(255, 255, 255, 0.05); }
-        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .glass { background: var(--card); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
-        .btn-premium { background: var(--accent); transition: all 0.3s ease; }
-        .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255, 31, 68, 0.4); }
-        .task-done { text-decoration: line-through; opacity: 0.5; }
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; }
+        .accent-bg { background: #ff1f44; }
+        .accent-text { color: #ff1f44; }
+        .nav-active { color: #ff1f44; transform: translateY(-5px); transition: all 0.3s; }
         .hidden { display: none; }
-        input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; color: white; outline: none; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-32">
 
     <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-black p-6">
-        <div class="glass p-8 w-full max-w-md text-center">
-            <h1 class="text-3xl font-bold mb-2 text-white">Mrtechnician</h1>
-            <p class="text-gray-400 mb-8">Premium Life Manager</p>
-            <div class="flex flex-col gap-4">
-                <button onclick="loginWithGoogle()" class="btn-premium py-4 rounded-xl font-bold flex items-center justify-center gap-3">
-                    <i class="fa-brands fa-google text-lg"></i>
-                    Continue with Google
-                </button>
-                <p class="text-[10px] text-gray-600 uppercase tracking-widest mt-4">Lifetime Data Protection Enabled</p>
-            </div>
+        <div class="glass p-10 w-full max-w-sm text-center">
+            <h1 class="text-4xl font-black mb-2 tracking-tighter">MRTECHNICIAN</h1>
+            <p class="text-gray-500 text-[10px] uppercase tracking-[0.3em] mb-12">Elite Management System</p>
+            <button onclick="login()" class="w-full bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-transform">
+                <i class="fa-brands fa-google"></i> Continue with Google
+            </button>
         </div>
     </div>
 
-    <div id="app-screen" class="hidden animate-fade-in">
-        <header class="p-6 flex justify-between items-center">
+    <div id="app-screen" class="hidden">
+        
+        <header class="p-8 flex justify-between items-center">
             <div>
-                <h2 id="welcome-user" class="text-xl font-bold">Hello, Creator</h2>
-                <p id="current-date" class="text-xs text-gray-500 uppercase tracking-widest"></p>
+                <p id="header-date" class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1"></p>
+                <h2 id="user-welcome" class="text-2xl font-black">Creator</h2>
             </div>
-            <button onclick="auth.signOut()" class="text-gray-500 p-2"><i class="fa-solid fa-right-from-bracket"></i></button>
+            <img id="user-img" src="" class="w-12 h-12 rounded-full border-2 border-red-500/20">
         </header>
 
-        <div class="px-6 mb-8">
-            <div class="glass p-4 flex justify-between items-center">
-                <div>
-                    <p class="text-[10px] text-gray-400 uppercase">Discipline Score</p>
-                    <h3 id="discipline-percent" class="text-2xl font-black text-red-500">0%</h3>
-                </div>
-                <div class="w-1/2 bg-gray-800 h-2 rounded-full overflow-hidden">
-                    <div id="discipline-bar" class="bg-red-500 h-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
         <main class="px-6">
-            <div id="home-view">
+            
+            <section id="home-view" class="view-section">
+                <div class="glass p-6 mb-6">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-4 tracking-tighter">System Health</p>
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-xs font-bold">Discipline Growth</span>
+                        <span id="growth-percent" class="text-3xl font-black accent-text">0%</span>
+                    </div>
+                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div id="growth-bar" class="h-full accent-bg transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg">Today's To-Do</h3>
-                    <button onclick="toggleModal('todo-modal')" class="btn-premium px-4 py-1 rounded-full text-xs font-bold">+ Add Task</button>
+                    <h3 class="font-bold">Protocol Tasks</h3>
+                    <button onclick="openModal()" class="accent-bg text-[10px] font-black uppercase px-4 py-2 rounded-full">+ Add</button>
                 </div>
-                <div id="today-list" class="space-y-3 mb-8"></div>
+                <div id="home-task-list" class="space-y-3"></div>
+            </section>
 
-                <div class="mt-10">
-                    <h3 class="font-bold text-lg mb-4 text-gray-400">Set Tomorrow's Plan</h3>
-                    <div class="glass p-4">
-                        <textarea id="tomorrow-input" placeholder="Type tasks (one per line)..." class="w-full bg-transparent outline-none text-sm h-24"></textarea>
-                        <button onclick="saveTomorrow()" class="w-full mt-2 text-xs font-bold text-red-500 py-2 border border-red-500 rounded-lg uppercase tracking-widest">Schedule for Tomorrow</button>
-                    </div>
+            <section id="todo-view" class="view-section hidden">
+                <h3 class="text-xl font-bold mb-6">Master Task List</h3>
+                <div id="master-todo-list" class="space-y-3"></div>
+            </section>
+
+            <section id="calendar-view" class="view-section hidden">
+                <h3 class="text-xl font-bold mb-6">Schedule</h3>
+                <div class="glass p-6">
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center">
+                        </div>
                 </div>
-            </div>
+            </section>
 
-            <div id="calendar-view" class="hidden">
-                <h3 class="font-bold text-xl mb-4">My Calendar</h3>
-                <div id="calendar-container" class="glass p-4"></div>
-            </div>
-
-            <div id="profile-view" class="hidden">
-                <div class="glass p-6 text-center">
-                    <div class="w-24 h-24 mx-auto mb-4 border-2 border-red-500 rounded-full overflow-hidden bg-gray-800">
-                        <img id="user-avatar" src="" class="w-full h-full object-cover">
-                    </div>
-                    <h2 id="prof-name" class="text-xl font-bold">---</h2>
-                    <p id="prof-job" class="text-gray-500 text-sm mb-6 uppercase tracking-widest">Digital Creator</p>
+            <section id="profile-view" class="view-section hidden text-center">
+                <div class="glass p-8">
+                    <img id="profile-pic-large" src="" class="w-24 h-24 rounded-full mx-auto border-4 border-red-500/20 mb-4">
+                    <h2 id="profile-name" class="text-2xl font-black mb-1">---</h2>
+                    <p class="text-gray-500 text-xs uppercase mb-8">Professional Creator</p>
+                    
                     <div class="grid grid-cols-2 gap-4 text-left">
-                        <div class="glass p-3"><p class="text-xs text-gray-400">Done</p><h4 id="count-done" class="font-bold">0</h4></div>
-                        <div class="glass p-3"><p class="text-xs text-gray-400">Missed</p><h4 id="count-missed" class="font-bold text-red-500">0</h4></div>
+                        <div class="bg-white/5 p-4 rounded-2xl">
+                            <p class="text-[10px] text-gray-500 uppercase mb-1">Completed</p>
+                            <span id="stat-done" class="text-xl font-bold">0</span>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-2xl">
+                            <p class="text-[10px] text-gray-500 uppercase mb-1">Missed</p>
+                            <span id="stat-missed" class="text-xl font-bold accent-text">0</span>
+                        </div>
                     </div>
+                    <button onclick="auth.signOut()" class="mt-8 text-gray-600 text-[10px] uppercase font-bold tracking-widest">Logout System</button>
                 </div>
-            </div>
+            </section>
+
         </main>
 
-        <nav class="fixed bottom-6 left-6 right-6 glass p-4 flex justify-around items-center z-40">
-            <button onclick="switchTab('home')" class="nav-btn text-red-500"><i class="fa-solid fa-house"></i></button>
-            <button onclick="switchTab('calendar')" class="nav-btn text-gray-500"><i class="fa-solid fa-calendar"></i></button>
-            <button onclick="switchTab('profile')" class="nav-btn text-gray-500"><i class="fa-solid fa-user-gear"></i></button>
+        <nav class="fixed bottom-8 left-6 right-6 glass p-5 flex justify-around items-center z-40">
+            <button onclick="showView('home')" id="nav-home" class="nav-active text-xl"><i class="fa-solid fa-house"></i></button>
+            <button onclick="showView('todo')" id="nav-todo" class="text-gray-600 text-xl"><i class="fa-solid fa-list-check"></i></button>
+            <button onclick="showView('calendar')" id="nav-calendar" class="text-gray-600 text-xl"><i class="fa-solid fa-calendar-days"></i></button>
+            <button onclick="showView('profile')" id="nav-profile" class="text-gray-600 text-xl"><i class="fa-solid fa-user"></i></button>
         </nav>
     </div>
 
-    <div id="todo-modal" class="fixed inset-0 bg-black/80 hidden z-50 p-6 flex items-center">
-        <div class="glass p-6 w-full">
-            <h3 class="font-bold mb-4">Add Today's Tasks</h3>
-            <textarea id="task-entry" class="w-full h-32 mb-4 bg-black/20 p-3 rounded-lg text-white" placeholder="Task 1&#10;Task 2..."></textarea>
-            <div class="flex gap-2">
-                <button onclick="addTasksFromModal()" class="flex-1 btn-premium py-3 rounded-xl font-bold">Add to List</button>
-                <button onclick="toggleModal('todo-modal')" class="px-4 py-3 rounded-xl glass">Cancel</button>
+    <div id="task-modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center p-6">
+        <div class="glass p-8 w-full">
+            <h3 class="font-bold mb-6">Inject New Task</h3>
+            <textarea id="modal-input" class="w-full bg-white/5 p-4 rounded-2xl outline-none border border-white/10 h-32 mb-4" placeholder="Enter task..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="addTask()" class="flex-1 accent-bg font-bold py-4 rounded-2xl">Confirm</button>
+                <button onclick="closeModal()" class="px-8 bg-white/10 rounded-2xl">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
             authDomain: "to-do-b0243.firebaseapp.com",
@@ -130,125 +130,108 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let userData = { today: [], tomorrow: [], doneCount: 0, missedCount: 0, lastLoginDate: "" };
+        let userData = { tasks: [], doneCount: 0, missedCount: 0 };
 
-        // --- 2. AUTHENTICATION ---
-        function loginWithGoogle() {
+        // AUTH SYSTEM
+        function login() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(e => alert(e.message));
+            auth.signInWithRedirect(provider);
         }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('welcome-user').innerText = "Hello, " + user.displayName.split(' ')[0];
-                document.getElementById('user-avatar').src = user.photoURL;
-                document.getElementById('prof-name').innerText = user.displayName;
-                loadData(user.uid);
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
+                document.getElementById('user-welcome').innerText = user.displayName.split(' ')[0];
+                document.getElementById('user-img').src = user.photoURL;
+                document.getElementById('profile-pic-large').src = user.photoURL;
+                document.getElementById('profile-name').innerText = user.displayName;
+                syncData(user.uid);
             }
         });
 
-        // --- 3. DATA PERSISTENCE ---
-        function loadData(uid) {
+        // DATA SYNC
+        function syncData(uid) {
             db.ref('users/' + uid).on('value', snap => {
                 const data = snap.val();
                 if (data) {
                     userData = data;
-                    checkMidnightSystem();
-                    renderAll();
+                    render();
                 } else {
-                    saveToDB();
+                    db.ref('users/' + uid).set(userData);
                 }
             });
         }
 
-        function checkMidnightSystem() {
-            const todayStr = new Date().toDateString();
-            if (userData.lastLoginDate !== todayStr && userData.lastLoginDate !== "") {
-                const missed = (userData.today || []).filter(t => !t.completed).length;
-                const done = (userData.today || []).filter(t => t.completed).length;
-                userData.doneCount += done;
-                userData.missedCount += missed;
-                userData.today = (userData.tomorrow || []).map(t => ({ ...t, completed: false }));
-                userData.tomorrow = [];
-                userData.lastLoginDate = todayStr;
-                saveToDB();
-            } else if (userData.lastLoginDate === "") {
-                userData.lastLoginDate = todayStr;
-                saveToDB();
-            }
-        }
-
-        function saveToDB() {
-            if (auth.currentUser) {
-                db.ref('users/' + auth.currentUser.uid).set(userData);
-            }
-        }
-
-        // --- 4. UI LOGIC ---
-        function addTasksFromModal() {
-            const lines = document.getElementById('task-entry').value.split('\n').filter(l => l.trim() !== "");
-            lines.forEach(text => {
-                if(!userData.today) userData.today = [];
-                userData.today.push({ text, completed: false });
-            });
-            document.getElementById('task-entry').value = "";
-            toggleModal('todo-modal');
-            saveToDB();
-        }
-
-        function toggleTask(index) {
-            userData.today[index].completed = !userData.today[index].completed;
-            saveToDB();
-        }
-
-        function saveTomorrow() {
-            const lines = document.getElementById('tomorrow-input').value.split('\n').filter(l => l.trim() !== "");
-            userData.tomorrow = lines.map(text => ({ text, completed: false }));
-            document.getElementById('tomorrow-input').value = "";
-            saveToDB();
-            alert("Tomorrow planned!");
-        }
-
-        function renderAll() {
-            document.getElementById('current-date').innerText = new Date().toDateString();
-            const listContainer = document.getElementById('today-list');
-            listContainer.innerHTML = (userData.today && userData.today.length) ? "" : "<p class='text-center text-gray-600 text-sm'>No tasks today.</p>";
+        // VIEW NAVIGATION
+        function showView(viewName) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(viewName + '-view').classList.remove('hidden');
             
-            if(userData.today) {
-                userData.today.forEach((task, i) => {
-                    listContainer.innerHTML += `
-                        <div onclick="toggleTask(${i})" class="glass p-4 flex items-center justify-between cursor-pointer">
-                            <span class="${task.completed ? 'task-done' : ''}">${task.text}</span>
-                            <i class="fa-solid ${task.completed ? 'fa-circle-check text-red-500' : 'fa-circle text-gray-700'}"></i>
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'accent-text'));
+            document.getElementById('nav-' + viewName).classList.add('nav-active', 'accent-text');
+        }
+
+        // TASK LOGIC
+        function addTask() {
+            const val = document.getElementById('modal-input').value;
+            if(!userData.tasks) userData.tasks = [];
+            userData.tasks.push({ text: val, completed: false });
+            save();
+            closeModal();
+            document.getElementById('modal-input').value = "";
+        }
+
+        function toggle(index) {
+            userData.tasks[index].completed = !userData.tasks[index].completed;
+            userData.tasks[index].completed ? userData.doneCount++ : userData.doneCount--;
+            save();
+        }
+
+        function save() { db.ref('users/' + auth.currentUser.uid).set(userData); }
+
+        // UI RENDERING
+        function render() {
+            const homeList = document.getElementById('home-task-list');
+            const masterList = document.getElementById('master-todo-list');
+            homeList.innerHTML = ""; masterList.innerHTML = "";
+            
+            if(userData.tasks) {
+                userData.tasks.forEach((t, i) => {
+                    const html = `
+                        <div onclick="toggle(${i})" class="glass p-5 flex justify-between items-center cursor-pointer active:scale-95 transition-all">
+                            <span class="${t.completed ? 'line-through opacity-30' : 'font-medium'}">${t.text}</span>
+                            <i class="fa-solid ${t.completed ? 'fa-circle-check accent-text' : 'fa-circle text-white/10'}"></i>
                         </div>`;
+                    homeList.innerHTML += html;
+                    masterList.innerHTML += html;
                 });
             }
 
             const total = (userData.doneCount || 0) + (userData.missedCount || 0);
             const percent = total === 0 ? 0 : Math.round((userData.doneCount / total) * 100);
-            document.getElementById('discipline-percent').innerText = percent + "%";
-            document.getElementById('discipline-bar').style.width = percent + "%";
-            document.getElementById('count-done').innerText = userData.doneCount || 0;
-            document.getElementById('count-missed').innerText = userData.missedCount || 0;
+            document.getElementById('growth-percent').innerText = percent + "%";
+            document.getElementById('growth-bar').style.width = percent + "%";
+            document.getElementById('stat-done').innerText = userData.doneCount || 0;
+            document.getElementById('stat-missed').innerText = userData.missedCount || 0;
+            document.getElementById('header-date').innerText = new Date().toDateString();
+            renderCalendar();
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(tab + '-view').classList.remove('hidden');
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = "";
+            const days = ['S','M','T','W','T','F','S'];
+            days.forEach(d => grid.innerHTML += `<span class="text-[10px] text-gray-600 font-bold">${d}</span>`);
+            for(let i=1; i<=31; i++) {
+                const isToday = i === new Date().getDate();
+                grid.innerHTML += `<div class="p-3 text-xs rounded-xl ${isToday ? 'accent-bg font-bold' : 'bg-white/5'}">${i}</div>`;
+            }
         }
 
-        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function openModal() { document.getElementById('task-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('task-modal').classList.add('hidden'); }
     </script>
 </body>
-</html>
+    </html>
 
-
-
-
-
- 
