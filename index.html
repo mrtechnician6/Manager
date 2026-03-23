@@ -1,255 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Life System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mrtechnician | Elite Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <style>
+        :root { --accent: #ff1f44; --bg: #000; --card: #111; --success: #22c55e; --danger: #ef4444; }
+        body { background-color: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass-card { background: var(--card); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; padding: 20px; }
+        .nav-bar { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        /* Feedback Toast */
+        #toast { 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 400px; z-index: 100; transition: 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        #toast.active { top: 20px; }
 
-<style>
-body { background:#0a0a0a; color:white; }
-.card { background:#141414; padding:15px; border-radius:15px; }
-</style>
+        .tab-btn { padding: 12px 20px; border-radius: 14px; font-size: 10px; font-weight: 900; text-transform: uppercase; transition: 0.3s; }
+        .active-tab { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(255, 31, 68, 0.3); }
+        .inactive-tab { background: #181818; color: #555; }
+
+        .calendar-day { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 12px; position: relative; }
+        .has-task::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
+        
+        .hidden { display: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+    </style>
 </head>
+<body class="pb-32">
 
-<body class="p-4 space-y-4">
+    <div id="toast" class="glass-card flex items-center gap-4 border-l-4">
+        <i id="toast-icon" class="fa-solid text-xl"></i>
+        <p id="toast-text" class="text-xs font-bold uppercase tracking-tight"></p>
+    </div>
 
-<h1 class="text-2xl font-bold">🔥 Elite Life System</h1>
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
+        <h1 class="text-4xl font-black tracking-tighter mb-2">MRTECHNICIAN</h1>
+        <p class="text-gray-500 text-[10px] uppercase tracking-[0.5em] mb-12">Protocol v5.0</p>
+        <button onclick="login()" class="w-full max-w-xs bg-white text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3">
+            <i class="fa-brands fa-google"></i> CONTINUE WITH GOOGLE
+        </button>
+    </div>
 
-<!-- ADD TASK -->
-<div class="card space-y-2">
-<input id="taskInput" placeholder="Write your mission..." class="w-full p-2 bg-black rounded">
-<input type="date" id="taskDate" class="w-full p-2 bg-black rounded">
-<button onclick="addTask()" class="bg-red-600 px-4 py-2 rounded w-full">Add Mission</button>
-</div>
-
-<!-- TODAY -->
-<div class="card">
-<h2 class="font-bold mb-2">📅 Today</h2>
-<div id="todayList"></div>
-</div>
-
-<!-- HABIT -->
-<div class="card">
-<h2 class="font-bold mb-2">🔥 Habit Tracker</h2>
-<input id="habitInput" placeholder="Add habit..." class="w-full p-2 bg-black rounded mb-2">
-<button onclick="addHabit()" class="bg-green-600 px-3 py-2 rounded w-full">Add Habit</button>
-<div id="habitList" class="mt-3"></div>
-</div>
-
-<!-- AI SUGGESTION -->
-<div class="card">
-<h2 class="font-bold mb-2">🧠 AI Suggestion</h2>
-<p id="aiBox" class="text-sm text-gray-300">Start working to get suggestions...</p>
-</div>
-
-<script>
-const firebaseConfig = {
-    apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
-    authDomain: "to-do-b0243.firebaseapp.com",
-    databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
-    projectId: "to-do-b0243",
-    appId: "1:984373301974:web:05bf84d27da4ed584c6f77"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const USER_ID = "nirdeshan_kunwar";
-
-let allMissions = [];
-let viewDate = new Date();
-let currentFilter = 'present';
-
-// 🔥 REALTIME SYNC
-function sync() {
-    db.ref('users/' + USER_ID + '/missions').on('value', snap => {
-        const data = snap.val();
-        allMissions = data ? Object.values(data) : [];
-        renderAll();
-    });
-
-    document.getElementById('today-date-label').innerText =
-        new Date().toDateString();
-}
-
-// 🔥 CREATE CARD WITH ✔ ❌
-function createCard(m) {
-    return `
-    <div class="glass-card">
-        <div class="flex justify-between items-center">
-            <div>
-                <h4 class="font-bold text-sm ${m.done ? 'line-through opacity-40 text-gray-500' : ''}">
-                    ${m.text}
-                </h4>
-                <p class="text-[9px] text-gray-500 mt-1">${m.date}</p>
+    <div id="app-screen" class="hidden">
+        <header class="p-8 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img id="u-img" src="" class="w-12 h-12 rounded-full border-2 border-red-600/20">
+                <div>
+                    <h2 id="u-name" class="font-black text-lg leading-tight">---</h2>
+                    <p id="u-email" class="text-[10px] text-gray-500 font-bold lowercase"></p>
+                </div>
             </div>
+            <button onclick="auth.signOut()" class="text-gray-600"><i class="fa-solid fa-power-off"></i></button>
+        </header>
 
-            <div class="flex gap-2">
-                <button onclick="markDone('${m.id}', true)" class="bg-green-500 px-3 py-1 rounded text-xs">✔</button>
-                <button onclick="markDone('${m.id}', false)" class="bg-red-500 px-3 py-1 rounded text-xs">✖</button>
+        <section id="home-view" class="px-6 space-y-6">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-black tracking-tighter">Today's To-do list</h3>
+                <button onclick="openModal()" class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-xl">+</button>
+            </div>
+            <div id="home-list" class="space-y-4"></div>
+        </section>
+
+        <section id="todo-view" class="px-6 hidden space-y-6">
+            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                <button onclick="setTab('present')" id="btn-present" class="tab-btn active-tab whitespace-nowrap">Present Work</button>
+                <button onclick="setTab('upcoming')" id="btn-upcoming" class="tab-btn inactive-tab whitespace-nowrap">Upcoming Plan</button>
+                <button onclick="setTab('past')" id="btn-past" class="tab-btn inactive-tab whitespace-nowrap">Past Records</button>
+            </div>
+            <div id="master-list" class="space-y-4"></div>
+        </section>
+
+        <section id="calendar-view" class="px-6 hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h3 id="cal-title" class="text-xl font-black">---</h3>
+                <div class="flex gap-6"><button onclick="shiftMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button><button onclick="shiftMonth(1)"><i class="fa-solid fa-chevron-right"></i></button></div>
+            </div>
+            <div class="glass-card">
+                <div class="grid grid-cols-7 text-center text-[9px] font-black text-gray-600 mb-6">
+                    <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+                </div>
+                <div id="cal-grid" class="grid grid-cols-7 gap-2"></div>
+            </div>
+            <button onclick="openModal('calendar')" class="w-full py-5 glass-card border-dashed border-red-500/40 text-red-500 font-black uppercase text-[10px] tracking-widest">
+                Your Plan In This Month
+            </button>
+        </section>
+
+        <nav class="fixed bottom-0 left-0 right-0 p-6 flex justify-around items-center nav-bar z-50">
+            <button onclick="showPage('home')" id="nav-home" class="text-red-500 text-2xl transition-all"><i class="fa-solid fa-house"></i></button>
+            <button onclick="showPage('todo')" id="nav-todo" class="text-gray-600 text-2xl transition-all"><i class="fa-solid fa-layer-group"></i></button>
+            <button onclick="showPage('calendar')" id="nav-calendar" class="text-gray-600 text-2xl transition-all"><i class="fa-solid fa-calendar-day"></i></button>
+        </nav>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/95 hidden z-[110] flex items-center p-6">
+        <div class="glass-card p-8 w-full max-w-md border-red-600/20">
+            <h2 class="font-black text-xl mb-6 tracking-tighter">Set New Mission</h2>
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="text-[9px] font-black text-gray-500 uppercase block mb-1">Execution Date</label>
+                    <input type="date" id="m-date" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 text-white outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-gray-500 uppercase block mb-1">Mission Details</label>
+                    <textarea id="m-text" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 h-28 outline-none focus:border-red-600/50" placeholder="Type mission..."></textarea>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="saveMission()" class="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase text-[10px]">Authorize</button>
+                <button onclick="closeModal()" class="px-6 font-bold text-gray-500 text-xs">Close</button>
             </div>
         </div>
-    </div>`;
-}
+    </div>
 
-// 🔥 MARK DONE / NOT DONE
-function markDone(id, status) {
-    db.ref('users/' + USER_ID + '/missions/' + id).update({ done: status });
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
+            authDomain: "to-do-b0243.firebaseapp.com",
+            databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
+            projectId: "to-do-b0243",
+            appId: "1:984373301974:web:05bf84d27da4ed584c6f77"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
-    if (status) {
-        alert("🔥 Congratulations! Keep going!");
-    } else {
-        alert("😔 Do better next time!");
-    }
-}
+        let missions = [];
+        let calDate = new Date();
+        let activeTab = 'present';
+        let UID = "";
 
-// 🔥 SAVE MISSION (MAIN FIX)
-function saveMission() {
-    const text = document.getElementById('modal-input').value.trim();
-    const date = document.getElementById('plan-date').value;
+        function login() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
 
-    if (!text || !date) return;
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                UID = user.uid;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('u-name').innerText = user.displayName;
+                document.getElementById('u-email').innerText = user.email;
+                document.getElementById('u-img').src = user.photoURL;
+                sync();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
+            }
+        });
 
-    const id = "M-" + Date.now();
-    const mission = { id, text, date, done: false };
+        function sync() {
+            db.ref('users/' + UID + '/missions').on('value', snap => {
+                missions = snap.val() ? Object.values(snap.val()) : [];
+                render();
+            });
+        }
 
-    // SAVE
-    db.ref('users/' + USER_ID + '/missions/' + id).set(mission);
+        function createItem(m) {
+            return `
+                <div class="glass-card flex items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm ${m.status === 'done' ? 'line-through opacity-30' : ''}">${m.text}</h4>
+                        <p class="text-[8px] font-black text-gray-600 uppercase mt-1">${m.date}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="tick('${m.id}', 'done')" class="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 border border-green-500/20"><i class="fa-solid fa-check"></i></button>
+                        <button onclick="tick('${m.id}', 'fail')" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>`;
+        }
 
-    // 🔥 INSTANT UI UPDATE (IMPORTANT)
-    allMissions.push(mission);
-    renderAll();
+        function render() {
+            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+            
+            // Render Homepage
+            const homeCont = document.getElementById('home-list');
+            homeCont.innerHTML = "";
+            const todayTasks = missions.filter(m => m.date === today);
+            todayTasks.forEach(m => homeCont.innerHTML += createItem(m));
+            if(todayTasks.length === 0) homeCont.innerHTML = `<div class="py-12 text-center text-gray-600 text-[10px] uppercase tracking-widest">No Missions Authorized Today</div>`;
 
-    closeModal();
-}
+            // Render To-do Tabs
+            const masterCont = document.getElementById('master-list');
+            masterCont.innerHTML = "";
+            let filtered = missions.filter(m => {
+                if (activeTab === 'present') return m.date === today;
+                if (activeTab === 'upcoming') return m.date > today;
+                if (activeTab === 'past') return m.date < today;
+            });
+            filtered.sort((a,b) => a.date.localeCompare(b.date)).forEach(m => masterCont.innerHTML += createItem(m));
+            if(filtered.length === 0) masterCont.innerHTML = `<div class="py-20 text-center text-gray-600 text-[10px] uppercase tracking-widest">List Empty</div>`;
 
-// 🔥 RENDER EVERYTHING
-function renderAll() {
-    renderHome();
-    renderTodoView();
-    renderCalendar();
-}
+            renderCalendar();
+        }
 
-// 🔥 HOME (TODAY)
-function renderHome() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const homeList = document.getElementById('home-today-list');
+        function tick(id, result) {
+            const status = result === 'done' ? 'done' : 'fail';
+            db.ref('users/' + UID + '/missions/' + id).update({ status: status });
+            
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-text');
+            
+            if(result === 'done') {
+                toast.style.borderLeftColor = "#22c55e";
+                icon.className = "fa-solid fa-trophy text-green-500";
+                text.innerText = "Congratulations! Keep doing like this 🔥";
+            } else {
+                toast.style.borderLeftColor = "#ef4444";
+                icon.className = "fa-solid fa-heart-crack text-red-500";
+                text.innerText = "Disappointed! But from next time do better 🎯";
+            }
+            
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
 
-    const todaysTasks = allMissions.filter(m => m.date === todayStr);
+        function saveMission() {
+            const text = document.getElementById('m-text').value;
+            const date = document.getElementById('m-date').value;
+            if(!text || !date) return;
+            const id = "M-" + Date.now();
+            db.ref('users/' + UID + '/missions/' + id).set({ id, text, date, status: 'pending' });
+            closeModal();
+            document.getElementById('m-text').value = "";
+        }
 
-    homeList.innerHTML = "";
+        function renderCalendar() {
+            const grid = document.getElementById('cal-grid');
+            grid.innerHTML = "";
+            const month = calDate.getMonth();
+            const year = calDate.getFullYear();
+            document.getElementById('cal-title').innerText = calDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-    if (todaysTasks.length === 0) {
-        homeList.innerHTML = `<p class="text-center text-gray-600 py-10 text-xs italic">No missions today</p>`;
-        return;
-    }
+            const first = new Date(year, month, 1).getDay();
+            const total = new Date(year, month + 1, 0).getDate();
+            const todayStr = new Date().toLocaleDateString('en-CA');
 
-    todaysTasks.forEach(m => {
-        homeList.innerHTML += createCard(m);
-    });
-}
+            for(let i=0; i<first; i++) grid.innerHTML += `<div></div>`;
+            for(let d=1; d<=total; d++) {
+                const curStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const hasTask = missions.some(m => m.date === curStr);
+                const active = curStr === todayStr ? 'bg-red-600 font-black' : 'bg-white/5';
+                grid.innerHTML += `<div onclick="openModal('${curStr}')" class="calendar-day ${active} ${hasTask ? 'has-task' : ''}">${d}</div>`;
+            }
+        }
 
-// 🔥 TODO VIEW (PRESENT / UPCOMING / PAST)
-function renderTodoView() {
-    const container = document.getElementById('todo-master-container');
-    const today = new Date().setHours(0,0,0,0);
+        function showPage(p) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(p + '-view').classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.className = 'text-gray-600 text-2xl transition-all');
+            document.getElementById('nav-' + p).className = 'text-red-500 text-2xl scale-110';
+        }
 
-    let filtered = allMissions.filter(m => {
-        const mDate = new Date(m.date).setHours(0,0,0,0);
+        function setTab(t) {
+            activeTab = t;
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn inactive-tab whitespace-nowrap');
+            document.getElementById('btn-' + t).className = 'tab-btn active-tab whitespace-nowrap';
+            render();
+        }
 
-        if (currentFilter === 'present') return mDate === today;
-        if (currentFilter === 'upcoming') return mDate > today;
-        if (currentFilter === 'past') return mDate < today;
-    });
-
-    container.innerHTML = "";
-
-    if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-600 py-10 text-xs">No data</p>`;
-        return;
-    }
-
-    filtered.sort((a,b)=> new Date(a.date)-new Date(b.date));
-
-    filtered.forEach(m => {
-        container.innerHTML += createCard(m);
-    });
-}
-
-// 🔥 CALENDAR
-function renderCalendar() {
-    const grid = document.getElementById('calendar-grid');
-    const label = document.getElementById('cal-month-year');
-
-    grid.innerHTML = "";
-
-    const month = viewDate.getMonth();
-    const year = viewDate.getFullYear();
-
-    label.innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    for(let i=0;i<firstDay;i++) grid.innerHTML += `<div></div>`;
-
-    for(let d=1; d<=daysInMonth; d++){
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const hasPlan = allMissions.some(m => m.date === dateStr);
-
-        grid.innerHTML += `
-        <div onclick="openPlanModal('${dateStr}')" class="aspect-square flex items-center justify-center rounded-xl text-xs ${hasPlan ? 'bg-red-600' : 'bg-white/5'}">
-            ${d}
-        </div>`;
-    }
-}
-
-// NAV
-function showView(v) {
-    document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(v + '-view').classList.remove('hidden');
-
-    document.querySelectorAll('.nav-bar button').forEach(b => b.className = 'text-gray-600 text-2xl');
-    document.getElementById('nav-' + v).className = 'text-red-500 text-2xl scale-110';
-}
-
-// FILTER
-function filterTodo(f) {
-    currentFilter = f;
-    renderTodoView();
-}
-
-// MODAL
-function openModal() {
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('plan-date').value = new Date().toISOString().split('T')[0];
-}
-
-function openPlanModal(date) {
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('plan-date').value = date;
-}
-
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-    document.getElementById('modal-input').value = "";
-}
-
-// CALENDAR NAV
-function changeMonth(dir) {
-    viewDate.setMonth(viewDate.getMonth() + dir);
-    renderCalendar();
-}
-
-// START
-sync();
-</script>
+        function openModal(d) {
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('m-date').value = d || new Date().toLocaleDateString('en-CA');
+        }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function shiftMonth(n) { calDate.setMonth(calDate.getMonth() + n); renderCalendar(); }
+    </script>
 </body>
-</html>
-
+    </html>
 
 
