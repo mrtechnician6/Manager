@@ -7,18 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
         :root { --accent: #ff1f44; --bg: #0a0a0a; --card: #141414; --success: #22c55e; --danger: #ef4444; }
         body { background-color: var(--bg); color: #fff; font-family: 'Inter', sans-serif; }
         .glass-card { background: var(--card); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 24px; padding: 20px; }
-        .nav-bar { background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
-        .tab-btn { padding: 8px 20px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
+        .nav-bar { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .tab-btn { padding: 10px 20px; border-radius: 14px; font-size: 11px; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
         .active-tab { background: var(--accent); color: white; }
         .inactive-tab { background: rgba(255,255,255,0.05); color: #555; }
-        .progress-bar { height: 6px; background: #222; border-radius: 10px; margin-top: 10px; overflow: hidden; }
+        .progress-bar { height: 6px; background: #222; border-radius: 10px; margin-top: 12px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 0.5s ease; }
         .hidden { display: none; }
     </style>
@@ -29,26 +28,29 @@
         <header class="p-8 flex justify-between items-center">
             <div>
                 <h1 id="view-title" class="text-2xl font-black">Mrtechnician</h1>
-                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Elite Protocol</p>
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Digital Creator Protocol</p>
             </div>
-            <img id="user-avatar" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full border border-white/10">
+            <div class="w-10 h-10 rounded-full border border-red-500/20 flex items-center justify-center bg-red-500/5">
+                <i class="fa-solid fa-user-secret text-red-500"></i>
+            </div>
         </header>
 
         <main id="home-view" class="view-section px-6 space-y-6">
-            <div class="glass-card flex justify-between items-center">
+            <div class="glass-card flex justify-between items-center border-l-4 border-red-600">
                 <div>
                     <h3 class="font-black text-lg">Today's To-do list</h3>
-                    <p class="text-[10px] text-gray-500 uppercase">Operational Status</p>
+                    <p id="today-date-label" class="text-[10px] text-gray-500 font-bold uppercase"></p>
                 </div>
-                <button onclick="openModal('today')" class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-xl shadow-lg">+</button>
+                <button onclick="openModal('today')" class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-xl shadow-lg shadow-red-600/30">+</button>
             </div>
-            <div id="home-today-list" class="space-y-4"></div>
+            <div id="home-today-list" class="space-y-4">
+                </div>
         </main>
 
         <main id="todo-view" class="view-section px-6 hidden space-y-6">
-            <div class="flex gap-2 overflow-x-auto pb-2">
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <button onclick="filterTodo('present')" id="tab-present" class="tab-btn active-tab">Present</button>
-                <button onclick="filterTodo('upcoming')" id="tab-upcoming" class="tab-btn inactive-tab">Upcoming Plan</button>
+                <button onclick="filterTodo('upcoming')" id="tab-upcoming" class="tab-btn inactive-tab whitespace-nowrap">Upcoming Plan</button>
                 <button onclick="filterTodo('past')" id="tab-past" class="tab-btn inactive-tab">Past Records</button>
             </div>
             <div id="todo-master-container" class="space-y-4"></div>
@@ -57,49 +59,69 @@
         <main id="calendar-view" class="view-section px-6 hidden space-y-6">
             <div class="flex justify-between items-center px-2">
                 <h3 id="cal-month-year" class="font-black text-xl">Month Year</h3>
-                <div class="flex gap-4">
+                <div class="flex gap-6 text-gray-400">
                     <button onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
                     <button onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
             
             <div class="glass-card">
-                <div class="grid grid-cols-7 gap-y-4 text-center text-[10px] font-black text-gray-500 mb-4">
+                <div class="grid grid-cols-7 gap-y-4 text-center text-[9px] font-black text-gray-600 mb-4">
                     <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
                 </div>
                 <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center"></div>
             </div>
 
-            <button onclick="openPlanModal()" class="w-full py-4 glass-card border-dashed border-red-500/30 text-red-500 font-black uppercase text-xs tracking-widest">
+            <button onclick="openPlanModal()" class="w-full py-5 glass-card border border-dashed border-red-500/40 text-red-500 font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-500/5 transition">
                 Your Plan In This Month
             </button>
         </main>
 
+        <main id="profile-view" class="view-section px-6 hidden space-y-6">
+            <div class="glass-card text-center py-10">
+                <div class="w-20 h-20 bg-red-600/10 rounded-full mx-auto mb-4 flex items-center justify-center border border-red-500/20">
+                    <i class="fa-solid fa-user-tie text-3xl text-red-500"></i>
+                </div>
+                <h2 class="text-xl font-black">Nirdeshan Kunwar</h2>
+                <p class="text-xs text-gray-500 uppercase font-bold tracking-widest mt-1">Digital Creator</p>
+                <div class="mt-8 pt-8 border-t border-white/5 grid grid-cols-2 gap-4">
+                    <div class="text-left">
+                        <p class="text-[9px] text-gray-500 font-black uppercase">Brand</p>
+                        <p class="font-bold">Mrtechnician</p>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[9px] text-gray-500 font-black uppercase">Status</p>
+                        <p class="font-bold text-green-500">Elite Active</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
         <nav class="fixed bottom-0 left-0 right-0 p-6 flex justify-around items-center nav-bar z-40">
-            <button onclick="showView('home')" id="nav-home" class="text-red-500 text-2xl"><i class="fa-solid fa-house"></i></button>
-            <button onclick="showView('todo')" id="nav-todo" class="text-gray-600 text-2xl"><i class="fa-solid fa-layer-group"></i></button>
-            <button onclick="showView('calendar')" id="nav-calendar" class="text-gray-600 text-2xl"><i class="fa-solid fa-calendar-day"></i></button>
-            <button class="text-gray-600 text-2xl"><i class="fa-solid fa-user"></i></button>
+            <button onclick="showView('home')" id="nav-home" class="text-red-500 text-2xl transition"><i class="fa-solid fa-house"></i></button>
+            <button onclick="showView('todo')" id="nav-todo" class="text-gray-600 text-2xl transition"><i class="fa-solid fa-layer-group"></i></button>
+            <button onclick="showView('calendar')" id="nav-calendar" class="text-gray-600 text-2xl transition"><i class="fa-solid fa-calendar-day"></i></button>
+            <button onclick="showView('profile')" id="nav-profile" class="text-gray-600 text-2xl transition"><i class="fa-solid fa-user"></i></button>
         </nav>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/95 hidden z-50 flex items-center p-6">
-        <div class="glass-card p-8 w-full max-w-md">
-            <h3 id="modal-title" class="font-black text-xl mb-6 tracking-tighter">Add Mission</h3>
-            <div id="date-picker-container" class="mb-4 hidden">
-                <label class="text-[10px] font-bold text-gray-500 uppercase block mb-2">Select Date</label>
-                <input type="date" id="plan-date" class="w-full bg-white/5 p-3 rounded-xl border border-white/10 text-white outline-none">
+    <div id="modal" class="fixed inset-0 bg-black/98 hidden z-50 flex items-center p-6">
+        <div class="glass-card p-8 w-full max-w-md border-red-500/10">
+            <h3 id="modal-title" class="font-black text-xl mb-6 tracking-tighter">Set Mission</h3>
+            <div id="date-picker-container" class="mb-6">
+                <label class="text-[9px] font-black text-gray-500 uppercase block mb-2 tracking-widest">Protocol Date</label>
+                <input type="date" id="plan-date" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 text-white outline-none focus:border-red-500/50">
             </div>
-            <textarea id="modal-input" class="w-full bg-white/5 p-4 rounded-2xl h-32 outline-none border border-white/5 focus:border-red-500" placeholder="Details..."></textarea>
-            <div class="flex gap-4 mt-6">
-                <button onclick="saveMission()" class="flex-1 bg-red-600 font-black py-4 rounded-2xl uppercase text-xs">Save Plan</button>
-                <button onclick="closeModal()" class="px-8 font-bold text-xs opacity-50">Cancel</button>
+            <textarea id="modal-input" class="w-full bg-white/5 p-4 rounded-2xl h-32 outline-none border border-white/5 focus:border-red-500" placeholder="Describe the mission..."></textarea>
+            <div class="flex gap-4 mt-8">
+                <button onclick="saveMission()" class="flex-1 bg-red-600 font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest shadow-lg shadow-red-600/20">Authorize Plan</button>
+                <button onclick="closeModal()" class="px-6 font-bold text-xs text-gray-500">Close</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Database Configuration from your screenshots
+        // Use your verified Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
             authDomain: "to-do-b0243.firebaseapp.com",
@@ -109,7 +131,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const USER_ID = "nir_digital";
+        const USER_ID = "nirdeshan_kunwar"; 
 
         let allMissions = [];
         let viewDate = new Date();
@@ -117,41 +139,51 @@
 
         function sync() {
             db.ref('users/' + USER_ID + '/missions').on('value', snap => {
-                allMissions = snap.val() ? Object.values(snap.val()) : [];
+                const data = snap.val();
+                allMissions = data ? Object.values(data) : [];
                 renderAll();
             });
+            document.getElementById('today-date-label').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        }
+
+        function createCard(m) {
+            const mDate = new Date(m.date).setHours(0,0,0,0);
+            const today = new Date().setHours(0,0,0,0);
+            
+            // Logic: Done = Green, Not Done Past = Red, Not Done Future = Red [User Request]
+            let statusColor = m.done ? 'var(--success)' : 'var(--danger)';
+            let icon = m.done ? 'fa-check-circle' : 'fa-circle-exclamation';
+            
+            return `
+                <div class="glass-card" onclick="toggleMission('${m.id}')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: ${statusColor}15; color: ${statusColor}">
+                            <i class="fa-solid ${icon}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm ${m.done ? 'line-through opacity-30 text-gray-500' : ''}">${m.text}</h4>
+                            <p class="text-[9px] font-black uppercase text-gray-600 mt-1 tracking-tighter">${m.date}</p>
+                        </div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${m.done ? '100%' : '15%'}; background: ${statusColor}"></div></div>
+                </div>`;
         }
 
         function renderAll() {
             const todayStr = new Date().toISOString().split('T')[0];
             
-            // Render Homepage
+            // Home View: Filter by Today [User Request]
             const homeList = document.getElementById('home-today-list');
             homeList.innerHTML = "";
-            allMissions.filter(m => m.date === todayStr).forEach(m => homeList.innerHTML += createCard(m));
+            const todaysTasks = allMissions.filter(m => m.date === todayStr);
+            if(todaysTasks.length === 0) homeList.innerHTML = `<p class="text-center text-gray-600 py-10 text-xs italic">No missions set for today.</p>`;
+            todaysTasks.forEach(m => homeList.innerHTML += createCard(m));
 
-            // Render To-do Section
+            // To-do Section Views
             renderTodoView();
 
-            // Render Calendar
+            // Calendar
             renderCalendar();
-        }
-
-        function createCard(m) {
-            const color = m.done ? 'var(--success)' : (new Date(m.date) < new Date().setHours(0,0,0,0) ? 'var(--danger)' : 'var(--accent)');
-            return `
-                <div class="glass-card" onclick="toggleMission('${m.id}')">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: ${color}20; color: ${color}">
-                            <i class="fa-solid ${m.done ? 'fa-check' : 'fa-crosshairs'}"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-sm ${m.done ? 'line-through opacity-30' : ''}">${m.text}</h4>
-                            <p class="text-[8px] font-black uppercase text-gray-500 mt-1">${m.date}</p>
-                        </div>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: ${m.done ? '100%' : '20%'}; background: ${color}"></div></div>
-                </div>`;
         }
 
         function renderTodoView() {
@@ -166,14 +198,14 @@
                 if (currentFilter === 'past') return mDate < today;
             });
 
-            filtered.forEach(m => container.innerHTML += createCard(m));
+            if(filtered.length === 0) container.innerHTML = `<p class="text-center text-gray-600 py-20 text-xs italic uppercase tracking-widest">Registry Empty</p>`;
+            filtered.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(m => container.innerHTML += createCard(m));
         }
 
         function renderCalendar() {
             const grid = document.getElementById('calendar-grid');
             const label = document.getElementById('cal-month-year');
             grid.innerHTML = "";
-
             const month = viewDate.getMonth();
             const year = viewDate.getFullYear();
             label.innerText = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -188,40 +220,37 @@
                 const isToday = dateStr === new Date().toISOString().split('T')[0];
 
                 grid.innerHTML += `
-                    <div onclick="openPlanModal('${dateStr}')" class="aspect-square flex flex-col items-center justify-center rounded-xl text-xs relative ${isToday ? 'bg-red-600 font-black' : 'bg-white/5'}">
+                    <div onclick="openPlanModal('${dateStr}')" class="aspect-square flex flex-col items-center justify-center rounded-xl text-xs relative ${isToday ? 'bg-red-600 font-black ring-4 ring-red-600/20' : 'bg-white/5'}">
                         ${d}
-                        ${hasPlan ? '<div class="w-1 h-1 bg-red-400 rounded-full mt-1"></div>' : ''}
+                        ${hasPlan ? '<div class="absolute bottom-1 w-1 h-1 bg-red-400 rounded-full"></div>' : ''}
                     </div>`;
             }
         }
 
         function toggleMission(id) {
             const mission = allMissions.find(m => m.id === id);
-            if(mission) {
-                db.ref('users/' + USER_ID + '/missions/' + id).update({ done: !mission.done });
-            }
+            if(mission) db.ref('users/' + USER_ID + '/missions/' + id).update({ done: !mission.done });
         }
 
         function saveMission() {
             const text = document.getElementById('modal-input').value;
-            const date = document.getElementById('plan-date').value || new Date().toISOString().split('T')[0];
-            if(!text) return;
-
-            const id = Date.now().toString();
+            const date = document.getElementById('plan-date').value;
+            if(!text || !date) return;
+            const id = "M-" + Date.now();
             db.ref('users/' + USER_ID + '/missions/' + id).set({ id, text, date, done: false });
             closeModal();
         }
 
         function openModal(type) {
             document.getElementById('modal').classList.remove('hidden');
-            document.getElementById('date-picker-container').classList.add('hidden');
             document.getElementById('plan-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-title').innerText = "Authorize Today's Mission";
         }
 
         function openPlanModal(date) {
             document.getElementById('modal').classList.remove('hidden');
-            document.getElementById('date-picker-container').classList.remove('hidden');
-            if(date) document.getElementById('plan-date').value = date;
+            document.getElementById('plan-date').value = date || new Date().toISOString().split('T')[0];
+            document.getElementById('modal-title').innerText = "Protocol Planning";
         }
 
         function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('modal-input').value=""; }
@@ -229,14 +258,14 @@
         function showView(v) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
             document.getElementById(v + '-view').classList.remove('hidden');
-            document.querySelectorAll('.nav-bar button').forEach(b => b.classList.replace('text-red-500', 'text-gray-600'));
-            document.getElementById('nav-' + v).classList.replace('text-gray-600', 'text-red-500');
+            document.querySelectorAll('.nav-bar button').forEach(b => b.className = 'text-gray-600 text-2xl transition');
+            document.getElementById('nav-' + v).className = 'text-red-500 text-2xl transition scale-110';
         }
 
         function filterTodo(f) {
             currentFilter = f;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('active-tab', 'inactive-tab'));
-            document.getElementById('tab-' + f).classList.replace('inactive-tab', 'active-tab');
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn inactive-tab whitespace-nowrap');
+            document.getElementById('tab-' + f).className = 'tab-btn active-tab whitespace-nowrap';
             renderTodoView();
         }
 
