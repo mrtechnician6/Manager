@@ -35,7 +35,6 @@
     </style>
 </head>
 <body class="pb-32">
-
     <div id="toast" class="glass-card flex items-center gap-4 border-l-4">
         <i id="toast-icon" class="fa-solid text-xl"></i>
         <p id="toast-text" class="text-xs font-bold uppercase tracking-tight"></p>
@@ -61,19 +60,33 @@
             <button onclick="auth.signOut()" class="text-gray-600"><i class="fa-solid fa-power-off"></i></button>
         </header>
 
+        <div class="px-6 mb-4">
+            <div class="glass-card grid grid-cols-2 gap-4 border-white/5">
+                <div class="text-center py-2 border-r border-white/10">
+                    <p class="text-[8px] font-black text-green-500 uppercase mb-1">Missions Done</p>
+                    <h4 id="stat-done" class="text-2xl font-black">0</h4>
+                </div>
+                <div class="text-center py-2">
+                    <p class="text-[8px] font-black text-red-500 uppercase mb-1">Missions Failed</p>
+                    <h4 id="stat-fail" class="text-2xl font-black">0</h4>
+                </div>
+            </div>
+        </div>
+
         <section id="home-view" class="px-6 space-y-6">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-xl font-black tracking-tighter">Today's To-do list</h3>
-                <button onclick="openModal()" class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-xl">+</button>
+                <h3 class="text-xl font-black tracking-tighter">Today's Protocol</h3>
+                <button onclick="openModal()" class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-xl shadow-lg shadow-red-600/20">+</button>
             </div>
             <div id="home-list" class="space-y-4"></div>
         </section>
 
         <section id="todo-view" class="px-6 hidden space-y-6">
             <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                <button onclick="setTab('present')" id="btn-present" class="tab-btn active-tab whitespace-nowrap">Present Work</button>
-                <button onclick="setTab('upcoming')" id="btn-upcoming" class="tab-btn inactive-tab whitespace-nowrap">Upcoming Plan</button>
-                <button onclick="setTab('past')" id="btn-past" class="tab-btn inactive-tab whitespace-nowrap">Past Records</button>
+                <button onclick="setTab('present')" id="btn-present" class="tab-btn active-tab whitespace-nowrap">Present</button>
+                <button onclick="setTab('tomorrow')" id="btn-tomorrow" class="tab-btn inactive-tab whitespace-nowrap">Tomorrow</button>
+                <button onclick="setTab('upcoming')" id="btn-upcoming" class="tab-btn inactive-tab whitespace-nowrap">Upcoming</button>
+                <button onclick="setTab('past')" id="btn-past" class="tab-btn inactive-tab whitespace-nowrap">History</button>
             </div>
             <div id="master-list" class="space-y-4"></div>
         </section>
@@ -83,15 +96,12 @@
                 <h3 id="cal-title" class="text-xl font-black">---</h3>
                 <div class="flex gap-6"><button onclick="shiftMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button><button onclick="shiftMonth(1)"><i class="fa-solid fa-chevron-right"></i></button></div>
             </div>
-            <div class="glass-card">
+            <div class="glass-card" id="cal-grid-container">
                 <div class="grid grid-cols-7 text-center text-[9px] font-black text-gray-600 mb-6">
                     <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
                 </div>
                 <div id="cal-grid" class="grid grid-cols-7 gap-2"></div>
             </div>
-            <button onclick="openModal('calendar')" class="w-full py-5 glass-card border-dashed border-red-500/40 text-red-500 font-black uppercase text-[10px] tracking-widest">
-                Your Plan In This Month
-            </button>
         </section>
 
         <nav class="fixed bottom-0 left-0 right-0 p-6 flex justify-around items-center nav-bar z-50">
@@ -103,26 +113,26 @@
 
     <div id="modal" class="fixed inset-0 bg-black/95 hidden z-[110] flex items-center p-6">
         <div class="glass-card p-8 w-full max-w-md border-red-600/20">
-            <h2 class="font-black text-xl mb-6 tracking-tighter">Set New Mission</h2>
+            <h2 class="font-black text-xl mb-6 tracking-tighter uppercase">Authorize Mission</h2>
             <div class="space-y-4 mb-8">
                 <div>
-                    <label class="text-[9px] font-black text-gray-500 uppercase block mb-1">Execution Date</label>
+                    <label class="text-[9px] font-black text-gray-500 uppercase block mb-1">Target Date</label>
                     <input type="date" id="m-date" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 text-white outline-none">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-gray-500 uppercase block mb-1">Mission Details</label>
-                    <textarea id="m-text" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 h-28 outline-none focus:border-red-600/50" placeholder="Type mission..."></textarea>
+                    <label class="text-[9px] font-black text-gray-500 uppercase block mb-1">Details</label>
+                    <textarea id="m-text" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 h-28 outline-none focus:border-red-600/50" placeholder="Specify mission..."></textarea>
                 </div>
             </div>
             <div class="flex gap-4">
-                <button onclick="saveMission()" class="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase text-[10px]">Authorize</button>
-                <button onclick="closeModal()" class="px-6 font-bold text-gray-500 text-xs">Close</button>
+                <button onclick="saveMission()" class="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase text-[10px]">Confirm</button>
+                <button onclick="closeModal()" class="px-6 font-bold text-gray-500 text-xs">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-               const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
             authDomain: "to-do-b0243.firebaseapp.com",
             databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
@@ -137,6 +147,13 @@
         let calDate = new Date();
         let activeTab = 'present';
         let UID = "";
+
+        // Get local YYYY-MM-DD string
+        const getLocalDate = (offset = 0) => {
+            let d = new Date();
+            d.setDate(d.getDate() + offset);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
 
         function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
@@ -156,90 +173,73 @@
         });
 
         function sync() {
-            // Using UID specifically to ensure we only get the current user's data
             db.ref('users/' + UID + '/missions').on('value', snap => {
                 const data = snap.val();
                 missions = data ? Object.values(data) : [];
+                updateStats();
                 render();
             });
+        }
+
+        function updateStats() {
+            const done = missions.filter(m => m.status === 'done').length;
+            const fail = missions.filter(m => m.status === 'fail').length;
+            document.getElementById('stat-done').innerText = done;
+            document.getElementById('stat-fail').innerText = fail;
         }
 
         function createItem(m) {
             const isDone = m.status === 'done';
             const isFail = m.status === 'fail';
-            
             return `
-                <div class="glass-card flex items-center justify-between gap-4 ${isDone ? 'border-green-500/30' : isFail ? 'border-red-500/30' : ''}">
+                <div class="glass-card flex items-center justify-between gap-4 transition-all ${isDone ? 'opacity-50' : ''}">
                     <div class="flex-1">
-                        <h4 class="font-bold text-sm ${isDone ? 'line-through opacity-40' : ''}">${m.text}</h4>
-                        <p class="text-[8px] font-black text-gray-600 uppercase mt-1">
-                            <i class="fa-regular fa-calendar-check mr-1"></i>${m.date} 
-                            <span class="ml-2 ${isDone ? 'text-green-500' : isFail ? 'text-red-500' : 'text-orange-500'}">
-                                ● ${m.status.toUpperCase()}
-                            </span>
-                        </p>
+                        <h4 class="font-bold text-sm ${isDone ? 'line-through' : ''}">${m.text}</h4>
+                        <p class="text-[8px] font-black text-gray-600 uppercase mt-1 tracking-widest">${m.date}</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="tick('${m.id}', 'done')" 
-                            class="w-10 h-10 rounded-xl transition-all ${isDone ? 'bg-green-500 text-white' : 'bg-green-500/10 text-green-500 border border-green-500/20'}">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <button onclick="tick('${m.id}', 'fail')" 
-                            class="w-10 h-10 rounded-xl transition-all ${isFail ? 'bg-red-500 text-white' : 'bg-red-500/10 text-red-500 border border-red-500/20'}">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                        <button onclick="tick('${m.id}', 'done')" class="w-10 h-10 rounded-xl transition-all ${isDone ? 'bg-green-500 text-white' : 'bg-green-500/10 text-green-500 border border-green-500/20'}"><i class="fa-solid fa-check"></i></button>
+                        <button onclick="tick('${m.id}', 'fail')" class="w-10 h-10 rounded-xl transition-all ${isFail ? 'bg-red-500 text-white' : 'bg-red-500/10 text-red-500 border border-red-500/20'}"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>`;
         }
 
         function render() {
-            // Get today's date in YYYY-MM-DD local format
-            const now = new Date();
-            const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            const today = getLocalDate();
+            const tomorrow = getLocalDate(1);
             
-            // 1. Render Homepage (Only Today's Missions)
+            // Homepage sync
             const homeCont = document.getElementById('home-list');
             const todayTasks = missions.filter(m => m.date === today);
-            
-            homeCont.innerHTML = todayTasks.length > 0 
-                ? todayTasks.map(m => createItem(m)).join('')
-                : `<div class="py-12 text-center text-gray-600 text-[10px] uppercase tracking-widest border-2 border-dashed border-white/5 rounded-3xl">No Missions Authorized Today</div>`;
+            homeCont.innerHTML = todayTasks.length ? todayTasks.map(m => createItem(m)).join('') : `<div class="py-12 text-center text-gray-600 text-[10px] uppercase border-2 border-dashed border-white/5 rounded-3xl">No Missions For Today</div>`;
 
-            // 2. Render Master Tabs (Present/Upcoming/Past)
+            // Master List sync
             const masterCont = document.getElementById('master-list');
             let filtered = missions.filter(m => {
                 if (activeTab === 'present') return m.date === today;
-                if (activeTab === 'upcoming') return m.date > today;
+                if (activeTab === 'tomorrow') return m.date === tomorrow;
+                if (activeTab === 'upcoming') return m.date > tomorrow;
                 if (activeTab === 'past') return m.date < today;
             });
             
-            // Sort by date (descending for past, ascending for future)
-            filtered.sort((a,b) => activeTab === 'past' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
-            
-            masterCont.innerHTML = filtered.length > 0
-                ? filtered.map(m => createItem(m)).join('')
-                : `<div class="py-20 text-center text-gray-600 text-[10px] uppercase tracking-widest">List Empty</div>`;
+            filtered.sort((a,b) => a.date.localeCompare(b.date));
+            masterCont.innerHTML = filtered.length ? filtered.map(m => createItem(m)).join('') : `<div class="py-20 text-center text-gray-600 text-[10px] uppercase">List is empty</div>`;
 
             renderCalendar();
         }
 
         function tick(id, result) {
             db.ref('users/' + UID + '/missions/' + id).update({ status: result });
-            
+            showToast(result);
+        }
+
+        function showToast(res) {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toast-icon');
             const text = document.getElementById('toast-text');
-            
-            if(result === 'done') {
-                toast.style.borderLeftColor = "#22c55e";
-                icon.className = "fa-solid fa-trophy text-green-500";
-                text.innerText = "Congratulations! Mission Accomplished 🔥";
-            } else {
-                toast.style.borderLeftColor = "#ef4444";
-                icon.className = "fa-solid fa-circle-exclamation text-red-500";
-                text.innerText = "Mission Failed. Discipline is key! 🎯";
-            }
-            
+            toast.style.borderLeftColor = res === 'done' ? "#22c55e" : "#ef4444";
+            icon.className = res === 'done' ? "fa-solid fa-trophy text-green-500" : "fa-solid fa-skull text-red-500";
+            text.innerText = res === 'done' ? "Target Cleared! Protocol Maintained." : "Protocol Breached. Mission Failed.";
             toast.classList.add('active');
             setTimeout(() => toast.classList.remove('active'), 3000);
         }
@@ -247,53 +247,39 @@
         function saveMission() {
             const text = document.getElementById('m-text').value;
             const date = document.getElementById('m-date').value;
-            if(!text || !date) {
-                alert("Please fill both mission and date.");
-                return;
-            }
+            if(!text || !date) return;
             const id = "M-" + Date.now();
-            db.ref('users/' + UID + '/missions/' + id).set({ 
-                id: id, 
-                text: text, 
-                date: date, 
-                status: 'pending' 
-            }).then(() => {
+            db.ref('users/' + UID + '/missions/' + id).set({ id, text, date, status: 'pending' }).then(() => {
                 closeModal();
                 document.getElementById('m-text').value = "";
-                // If it was for today, switch to home view to see it
-                if(date === new Date().toISOString().split('T')[0]) showPage('home');
+                if(date === getLocalDate()) showPage('home');
             });
         }
 
-        // Calendar and Navigation Logic (remains mostly same but ensures fresh render)
         function renderCalendar() {
             const grid = document.getElementById('cal-grid');
             grid.innerHTML = "";
             const month = calDate.getMonth();
             const year = calDate.getFullYear();
             document.getElementById('cal-title').innerText = calDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
             const first = new Date(year, month, 1).getDay();
             const total = new Date(year, month + 1, 0).getDate();
-            const now = new Date();
-            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            const todayStr = getLocalDate();
 
             for(let i=0; i<first; i++) grid.innerHTML += `<div></div>`;
             for(let d=1; d<=total; d++) {
                 const curStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const hasTask = missions.some(m => m.date === curStr);
-                const isToday = curStr === todayStr;
-                const activeStyle = isToday ? 'bg-red-600 font-black scale-110' : 'bg-white/5';
-                grid.innerHTML += `<div onclick="openModal('${curStr}')" class="calendar-day ${activeStyle} ${hasTask ? 'has-task' : ''} cursor-pointer hover:bg-white/20 transition-all">${d}</div>`;
+                const active = curStr === todayStr ? 'bg-red-600 font-black' : 'bg-white/5';
+                grid.innerHTML += `<div onclick="openModal('${curStr}')" class="calendar-day ${active} ${hasTask ? 'has-task' : ''}">${d}</div>`;
             }
         }
 
         function showPage(p) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(p + '-view').classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.className = 'text-gray-600 text-2xl transition-all');
+            document.querySelectorAll('nav button').forEach(b => b.className = 'text-gray-600 text-2xl');
             document.getElementById('nav-' + p).className = 'text-red-500 text-2xl scale-110';
-            render(); // Refresh data on view change
         }
 
         function setTab(t) {
@@ -305,95 +291,13 @@
 
         function openModal(d) {
             document.getElementById('modal').classList.remove('hidden');
-            if(d && d.length > 5) {
-                document.getElementById('m-date').value = d;
-            } else {
-                const now = new Date();
-                document.getElementById('m-date').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-            }
+            document.getElementById('m-date').value = (d && d.length > 5) ? d : getLocalDate();
         }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         function shiftMonth(n) { calDate.setMonth(calDate.getMonth() + n); renderCalendar(); }
-                                                                                                              
-        
-        
-        
-        
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
-            authDomain: "to-do-b0243.firebaseapp.com",
-            databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
-            projectId: "to-do-b0243",
-            appId: "1:984373301974:web:05bf84d27da4ed584c6f77"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-
-        let missions = [];
-        let calDate = new Date();
-        let activeTab = 'present';
-        let UID = "";
-
-        function login() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                UID = user.uid;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('u-name').innerText = user.displayName;
-                document.getElementById('u-email').innerText = user.email;
-                document.getElementById('u-img').src = user.photoURL;
-                sync();
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
-            }
-        });
-
-        function sync() {
-            db.ref('users/' + UID + '/missions').on('value', snap => {
-                missions = snap.val() ? Object.values(snap.val()) : [];
-                render();
-            });
-        }
-
-        function createItem(m) {
-            return `
-                <div class="glass-card flex items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <h4 class="font-bold text-sm ${m.status === 'done' ? 'line-through opacity-30' : ''}">${m.text}</h4>
-                        <p class="text-[8px] font-black text-gray-600 uppercase mt-1">${m.date}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="tick('${m.id}', 'done')" class="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 border border-green-500/20"><i class="fa-solid fa-check"></i></button>
-                        <button onclick="tick('${m.id}', 'fail')" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                </div>`;
-        }
-
-        function render() {
-            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-            
-            // Render Homepage
-            const homeCont = document.getElementById('home-list');
-            homeCont.innerHTML = "";
-            const todayTasks = missions.filter(m => m.date === today);
-            todayTasks.forEach(m => homeCont.innerHTML += createItem(m));
-            if(todayTasks.length === 0) homeCont.innerHTML = `<div class="py-12 text-center text-gray-600 text-[10px] uppercase tracking-widest">No Missions Authorized Today</div>`;
-
-            // Render To-do Tabs
-            const masterCont = document.getElementById('master-list');
-            masterCont.innerHTML = "";
-            let filtered = missions.filter(m => {
-                if (activeTab === 'present') return m.date === today;
-                if (activeTab === 'upcoming') return m.date > today;
-                if (activeTab === 'past') return m.date < today;
-            });
-     </script>
+    </script>
 </body>
-    </html>
+</html>
+    
 
 
