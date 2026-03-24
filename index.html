@@ -138,7 +138,7 @@
         let activeTab = 'present';
         let UID = "";
 
-        function login() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
+        function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
         auth.onAuthStateChanged(user => {
             if (user) {
