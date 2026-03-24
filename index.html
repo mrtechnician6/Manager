@@ -122,6 +122,204 @@
     </div>
 
     <script>
+               const firebaseConfig = {
+            apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
+            authDomain: "to-do-b0243.firebaseapp.com",
+            databaseURL: "https://to-do-b0243-default-rtdb.firebaseio.com/",
+            projectId: "to-do-b0243",
+            appId: "1:984373301974:web:05bf84d27da4ed584c6f77"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let missions = [];
+        let calDate = new Date();
+        let activeTab = 'present';
+        let UID = "";
+
+        function login() { auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                UID = user.uid;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('u-name').innerText = user.displayName;
+                document.getElementById('u-email').innerText = user.email;
+                document.getElementById('u-img').src = user.photoURL;
+                sync();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
+            }
+        });
+
+        function sync() {
+            // Using UID specifically to ensure we only get the current user's data
+            db.ref('users/' + UID + '/missions').on('value', snap => {
+                const data = snap.val();
+                missions = data ? Object.values(data) : [];
+                render();
+            });
+        }
+
+        function createItem(m) {
+            const isDone = m.status === 'done';
+            const isFail = m.status === 'fail';
+            
+            return `
+                <div class="glass-card flex items-center justify-between gap-4 ${isDone ? 'border-green-500/30' : isFail ? 'border-red-500/30' : ''}">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm ${isDone ? 'line-through opacity-40' : ''}">${m.text}</h4>
+                        <p class="text-[8px] font-black text-gray-600 uppercase mt-1">
+                            <i class="fa-regular fa-calendar-check mr-1"></i>${m.date} 
+                            <span class="ml-2 ${isDone ? 'text-green-500' : isFail ? 'text-red-500' : 'text-orange-500'}">
+                                ● ${m.status.toUpperCase()}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="tick('${m.id}', 'done')" 
+                            class="w-10 h-10 rounded-xl transition-all ${isDone ? 'bg-green-500 text-white' : 'bg-green-500/10 text-green-500 border border-green-500/20'}">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                        <button onclick="tick('${m.id}', 'fail')" 
+                            class="w-10 h-10 rounded-xl transition-all ${isFail ? 'bg-red-500 text-white' : 'bg-red-500/10 text-red-500 border border-red-500/20'}">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        function render() {
+            // Get today's date in YYYY-MM-DD local format
+            const now = new Date();
+            const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            
+            // 1. Render Homepage (Only Today's Missions)
+            const homeCont = document.getElementById('home-list');
+            const todayTasks = missions.filter(m => m.date === today);
+            
+            homeCont.innerHTML = todayTasks.length > 0 
+                ? todayTasks.map(m => createItem(m)).join('')
+                : `<div class="py-12 text-center text-gray-600 text-[10px] uppercase tracking-widest border-2 border-dashed border-white/5 rounded-3xl">No Missions Authorized Today</div>`;
+
+            // 2. Render Master Tabs (Present/Upcoming/Past)
+            const masterCont = document.getElementById('master-list');
+            let filtered = missions.filter(m => {
+                if (activeTab === 'present') return m.date === today;
+                if (activeTab === 'upcoming') return m.date > today;
+                if (activeTab === 'past') return m.date < today;
+            });
+            
+            // Sort by date (descending for past, ascending for future)
+            filtered.sort((a,b) => activeTab === 'past' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+            
+            masterCont.innerHTML = filtered.length > 0
+                ? filtered.map(m => createItem(m)).join('')
+                : `<div class="py-20 text-center text-gray-600 text-[10px] uppercase tracking-widest">List Empty</div>`;
+
+            renderCalendar();
+        }
+
+        function tick(id, result) {
+            db.ref('users/' + UID + '/missions/' + id).update({ status: result });
+            
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-text');
+            
+            if(result === 'done') {
+                toast.style.borderLeftColor = "#22c55e";
+                icon.className = "fa-solid fa-trophy text-green-500";
+                text.innerText = "Congratulations! Mission Accomplished 🔥";
+            } else {
+                toast.style.borderLeftColor = "#ef4444";
+                icon.className = "fa-solid fa-circle-exclamation text-red-500";
+                text.innerText = "Mission Failed. Discipline is key! 🎯";
+            }
+            
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        function saveMission() {
+            const text = document.getElementById('m-text').value;
+            const date = document.getElementById('m-date').value;
+            if(!text || !date) {
+                alert("Please fill both mission and date.");
+                return;
+            }
+            const id = "M-" + Date.now();
+            db.ref('users/' + UID + '/missions/' + id).set({ 
+                id: id, 
+                text: text, 
+                date: date, 
+                status: 'pending' 
+            }).then(() => {
+                closeModal();
+                document.getElementById('m-text').value = "";
+                // If it was for today, switch to home view to see it
+                if(date === new Date().toISOString().split('T')[0]) showPage('home');
+            });
+        }
+
+        // Calendar and Navigation Logic (remains mostly same but ensures fresh render)
+        function renderCalendar() {
+            const grid = document.getElementById('cal-grid');
+            grid.innerHTML = "";
+            const month = calDate.getMonth();
+            const year = calDate.getFullYear();
+            document.getElementById('cal-title').innerText = calDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            const first = new Date(year, month, 1).getDay();
+            const total = new Date(year, month + 1, 0).getDate();
+            const now = new Date();
+            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+            for(let i=0; i<first; i++) grid.innerHTML += `<div></div>`;
+            for(let d=1; d<=total; d++) {
+                const curStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const hasTask = missions.some(m => m.date === curStr);
+                const isToday = curStr === todayStr;
+                const activeStyle = isToday ? 'bg-red-600 font-black scale-110' : 'bg-white/5';
+                grid.innerHTML += `<div onclick="openModal('${curStr}')" class="calendar-day ${activeStyle} ${hasTask ? 'has-task' : ''} cursor-pointer hover:bg-white/20 transition-all">${d}</div>`;
+            }
+        }
+
+        function showPage(p) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(p + '-view').classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.className = 'text-gray-600 text-2xl transition-all');
+            document.getElementById('nav-' + p).className = 'text-red-500 text-2xl scale-110';
+            render(); // Refresh data on view change
+        }
+
+        function setTab(t) {
+            activeTab = t;
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn inactive-tab whitespace-nowrap');
+            document.getElementById('btn-' + t).className = 'tab-btn active-tab whitespace-nowrap';
+            render();
+        }
+
+        function openModal(d) {
+            document.getElementById('modal').classList.remove('hidden');
+            if(d && d.length > 5) {
+                document.getElementById('m-date').value = d;
+            } else {
+                const now = new Date();
+                document.getElementById('m-date').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            }
+        }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function shiftMonth(n) { calDate.setMonth(calDate.getMonth() + n); renderCalendar(); }
+                                                                                                              
+        
+        
+        
+        
+        
         const firebaseConfig = {
             apiKey: "AIzaSyCp8BR3HCaVBf48-81AIW0HpiaVEfVdIIc",
             authDomain: "to-do-b0243.firebaseapp.com",
@@ -194,85 +392,7 @@
                 if (activeTab === 'upcoming') return m.date > today;
                 if (activeTab === 'past') return m.date < today;
             });
-            filtered.sort((a,b) => a.date.localeCompare(b.date)).forEach(m => masterCont.innerHTML += createItem(m));
-            if(filtered.length === 0) masterCont.innerHTML = `<div class="py-20 text-center text-gray-600 text-[10px] uppercase tracking-widest">List Empty</div>`;
-
-            renderCalendar();
-        }
-
-        function tick(id, result) {
-            const status = result === 'done' ? 'done' : 'fail';
-            db.ref('users/' + UID + '/missions/' + id).update({ status: status });
-            
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const text = document.getElementById('toast-text');
-            
-            if(result === 'done') {
-                toast.style.borderLeftColor = "#22c55e";
-                icon.className = "fa-solid fa-trophy text-green-500";
-                text.innerText = "Congratulations! Keep doing like this 🔥";
-            } else {
-                toast.style.borderLeftColor = "#ef4444";
-                icon.className = "fa-solid fa-heart-crack text-red-500";
-                text.innerText = "Disappointed! But from next time do better 🎯";
-            }
-            
-            toast.classList.add('active');
-            setTimeout(() => toast.classList.remove('active'), 3000);
-        }
-
-        function saveMission() {
-            const text = document.getElementById('m-text').value;
-            const date = document.getElementById('m-date').value;
-            if(!text || !date) return;
-            const id = "M-" + Date.now();
-            db.ref('users/' + UID + '/missions/' + id).set({ id, text, date, status: 'pending' });
-            closeModal();
-            document.getElementById('m-text').value = "";
-        }
-
-        function renderCalendar() {
-            const grid = document.getElementById('cal-grid');
-            grid.innerHTML = "";
-            const month = calDate.getMonth();
-            const year = calDate.getFullYear();
-            document.getElementById('cal-title').innerText = calDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-            const first = new Date(year, month, 1).getDay();
-            const total = new Date(year, month + 1, 0).getDate();
-            const todayStr = new Date().toLocaleDateString('en-CA');
-
-            for(let i=0; i<first; i++) grid.innerHTML += `<div></div>`;
-            for(let d=1; d<=total; d++) {
-                const curStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const hasTask = missions.some(m => m.date === curStr);
-                const active = curStr === todayStr ? 'bg-red-600 font-black' : 'bg-white/5';
-                grid.innerHTML += `<div onclick="openModal('${curStr}')" class="calendar-day ${active} ${hasTask ? 'has-task' : ''}">${d}</div>`;
-            }
-        }
-
-        function showPage(p) {
-            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(p + '-view').classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.className = 'text-gray-600 text-2xl transition-all');
-            document.getElementById('nav-' + p).className = 'text-red-500 text-2xl scale-110';
-        }
-
-        function setTab(t) {
-            activeTab = t;
-            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn inactive-tab whitespace-nowrap');
-            document.getElementById('btn-' + t).className = 'tab-btn active-tab whitespace-nowrap';
-            render();
-        }
-
-        function openModal(d) {
-            document.getElementById('modal').classList.remove('hidden');
-            document.getElementById('m-date').value = d || new Date().toLocaleDateString('en-CA');
-        }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        function shiftMonth(n) { calDate.setMonth(calDate.getMonth() + n); renderCalendar(); }
-    </script>
+     </script>
 </body>
     </html>
 
